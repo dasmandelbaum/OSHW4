@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE log SYSTEM "logger.dtd">
+<log>
+<record>
+  <date>2018-04-22T20:37:10</date>
+  <millis>1524443830122</millis>
+  <sequence>0</sequence>
+  <logger>global</logger>
+  <level>WARNING</level>
+  <class>os.hw3.Fat32Reader</class>
+  <method>cd</method>
+  <thread>1</thread>
+  <message>b is not a directory.</message>
+</record>
+<record>
+  <date>2018-04-22T20:37:55</date>
+  <millis>1524443875148</millis>
+  <sequence>1</sequence>
+  <logger>global</logger>
+  <level>WARNING</level>
+  <class>os.hw3.Fat32Reader</class>
+  <method>read</method>
+  <thread>1</thread>
+  <message>File const.txt error: attempt to read beyond EoF.</message>
+</record>
+</log>
