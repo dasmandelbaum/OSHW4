@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Fat32Reader-1.0-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/Fat32Reader/target/Fat32Reader-1.0-SNAPSHOT.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
