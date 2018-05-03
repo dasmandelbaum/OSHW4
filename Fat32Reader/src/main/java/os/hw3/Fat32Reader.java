@@ -19,7 +19,6 @@ public class Fat32Reader {
     FileHandler fh;
     private String header;
     Boot boot;
-    private Directory fs;//represents current directory
     private String volumeName;
     int currentLocation;
     private int[] firstThreeFreecClusters;
