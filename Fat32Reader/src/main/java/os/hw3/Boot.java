@@ -15,6 +15,10 @@ class Boot
     private int BPB_RsvdSecCnt;
     private int BPB_NumFATS;
     private int BPB_FATSz32;
+
+
+
+    private int BPB_FSInfo;
     private int rootDirAddress;
     private int BPB_RootClus;
 
@@ -31,6 +35,7 @@ class Boot
         BPB_NumFATS = setValue(raf, 16, 1, 0);//16->17
         BPB_FATSz32 = setValue(raf, 36, 4, 36);//36->40
         BPB_RootClus = setValue(raf, 44, 4, 44);
+        BPB_FSInfo = setValue(raf, 48, 2, 0);
         rootDirAddress = (getBPB_NumFATS() * getBPB_FATSz32()) + getBPB_RsvdSecCnt();
         fr.currentLocation = 40;
     }
@@ -96,5 +101,9 @@ class Boot
 
     public int getBPB_RootClus() {
         return BPB_RootClus;
+    }
+
+    public int getBPB_FSInfo() {
+        return BPB_FSInfo;
     }
 }

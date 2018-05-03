@@ -81,7 +81,21 @@ public class Fat32Reader {
         fr.fs.clusters = fr.getClusters(raf, fr.getFATSecNum(n), fr.getFATEntOffset(n), fr.fs.nextClusterNumber);
         fr.parseDirectories(raf,fr.fs);
 
-        
+        /*Get free cluster indices and count*/
+
+        //go to BPB_FSInfo location - FSINFO sector
+        fr.currentLocation = fr.getAddress(fr.boot.getBPB_FSInfo());
+
+        //get number of free clusters
+        byte[] FSI_Free_Count = new byte[4];
+        fr.numFreeClusters = Integer.parseInt(fr.getValue(raf, FSI_Free_Count, 488, 4), 16);
+        System.out.println(fr.numFreeClusters);
+
+        //get first three free cluster numbers
+        byte[] FSI_Nxt_Free = new byte[4];
+        fr.firstThreeFreecClusters[0] = Integer.parseInt(fr.getValue(raf, FSI_Nxt_Free, 4, 4), 16);;
+        System.out.println(fr.firstThreeFreecClusters[0]);
+
         /* Main loop.  You probably want to create a helper function for each command besides quit. */
         Scanner s = new Scanner(System.in);
         String input;
