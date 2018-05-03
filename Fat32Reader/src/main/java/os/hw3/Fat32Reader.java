@@ -21,6 +21,8 @@ public class Fat32Reader {
     Boot boot;
     private String volumeName;
     int currentLocation;
+    private int[] firstThreeFreecClusters;
+    private int numFreeClusters;
 
     public String getHeader() {
         return header;
@@ -39,6 +41,8 @@ public class Fat32Reader {
         setHeader("/");
         fs = new Directory();
         currentLocation = 0;
+        firstThreeFreecClusters = new int[3];
+        numFreeClusters = 0;
     }
 
     /**
@@ -125,6 +129,10 @@ public class Fat32Reader {
                 else if (command.equalsIgnoreCase("quit"))
                 {
                     break;
+                }
+                else if(command.equalsIgnoreCase("freelist"))
+                {
+                    fr.getFreelist();
                 }
                 else
                 {
@@ -675,5 +683,11 @@ public class Fat32Reader {
         }
         //System.out.println("Cluster list size: " + clusters.size());//TEST
         return clusters;
+    }
+
+    public void getFreelist() 
+    {
+        System.out.println("First three free cluster indices: " + firstThreeFreecClusters[0] + ", " + firstThreeFreecClusters[1] + ", " + firstThreeFreecClusters[2]);
+        System.out.println("Number of free clusters in FAT: " + numFreeClusters);
     }
 }
