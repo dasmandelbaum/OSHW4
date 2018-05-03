@@ -93,8 +93,12 @@ public class Fat32Reader {
 
         //get first three free cluster numbers
         byte[] FSI_Nxt_Free = new byte[4];
-        fr.firstThreeFreecClusters[0] = Integer.parseInt(fr.getValue(raf, FSI_Nxt_Free, 4, 4), 16);;
+        fr.firstThreeFreecClusters[0] = Integer.parseInt(fr.getValue(raf, FSI_Nxt_Free, 4, 4), 16);
+        fr.firstThreeFreecClusters[1] = fr.firstThreeFreecClusters[0] + 1; //TODO: IS THIS HOW IT WORKS?
+        fr.firstThreeFreecClusters[2] = fr.firstThreeFreecClusters[1] + 1;
         System.out.println(fr.firstThreeFreecClusters[0]);
+        System.out.println(fr.firstThreeFreecClusters[1]);
+        System.out.println(fr.firstThreeFreecClusters[2]);
 
         /* Main loop.  You probably want to create a helper function for each command besides quit. */
         Scanner s = new Scanner(System.in);
