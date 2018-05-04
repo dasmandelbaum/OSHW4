@@ -184,68 +184,91 @@ public class Fat32Reader {
 
     private void delete(String fName, RandomAccessFile raf) throws IOException
     {
+        boolean marked = false;
         //mark file as deleted in current directory
         for(Directory dir: this.fs.files)
         {
             if (dir.name.equalsIgnoreCase(fName) && dir.containsFiles == false)//dealing with file not directory
             {
-                for(int cluster: this.fs.clusters)
-                {
-                    System.out.println(cluster);
-                    int nextAddress = getAddress(this.boot.getRootDirAddress() + cluster - this.boot.getBPB_RootClus());
-                    currentLocation = nextAddress;
-                    System.out.println(nextAddress);
-                    raf.seek(nextAddress);
-                    //search for file name in cluster
-                    for (int i = 0; i < 16; i++)//parse each 32 bit potential entry
-                    {
-                        System.out.println(currentLocation);
-                        byte[] DIR_Name = new byte[11];//short name - 0 -> 11
-                        raf.read(DIR_Name, 0, 11);
-                        this.currentLocation += 11;
-                        // System.out.println(DIR_Name[0]);//TEST
-                        String byteString = new String(DIR_Name, "UTF-8");//https://stackoverflow.com/a/18583290
-                        String[] splitName = byteString.split(" +");
-                        if(splitName.length == 2)
-                        {
-                            byteString = splitName[0] + "." + splitName[1];
-                            byteString = byteString.trim();//lowercase?
-                        }
-                        else
-                        {
-                            byteString = byteString.trim();//lowercase?
-                        }
-                        System.out.println("This is the directory's name: " + byteString);//TEST
-                        if(byteString.equalsIgnoreCase(dir.name))
-                        {
-                            //mark it
-                            raf.seek(currentLocation - 11);//go back to beginning
-                            byte b = 05;
-                            raf.write(b);
-                            /*
-                                test
-                             */
-                            raf.seek(currentLocation - 11);//go back to beginning
-                            System.out.println("Just marked location with " + raf.readByte());
-                            break;
-                        }
-                        else
-                        {
-                            raf.seek(currentLocation + 21);//try next one
-                            currentLocation += 21;
-                        }
-                    }
-                }
-
+                marked = markDirectoryEntries(raf, this.fs.clusters, dir.name);
+                break;
             }
+            else if(dir.name.equalsIgnoreCase(fName) && dir.containsFiles == true)
+            {
+                LOGGER.log(Level.WARNING, fName + " is directory and cannot be deleted.");
+                System.out.println("Error: cannot delete directory");
+                break;
+            }
+        }
+        if(marked)//marking worked
+        {
+            this.fs.files.clear();
+            if(this.fs.parentDirectory == null)//root
+            {
+                int startOfRootDirectory = getAddress(this.boot.getRootDirAddress()) + 32;
+                this.currentLocation = startOfRootDirectory;
+                raf.seek(this.currentLocation);
+            }
+            parseDirectories(raf, this.fs);
         }
 
         //mark entries in FAT as free (0000000)
             //update FAT2
             //update number of free clusters and first free cluster if its earlier than current first free clusters
-            //mark as deleted by setting DIR_Name[0] = 0xE5 (0x00)?
-            //delete directory object from parent directory
     }
+
+    private boolean markDirectoryEntries(RandomAccessFile raf, ArrayList<Integer> clusters, String toDelete) throws IOException
+    {
+        for(int cluster: clusters)
+        {
+            System.out.println(cluster);
+            int nextAddress = getAddress(this.boot.getRootDirAddress() + cluster - this.boot.getBPB_RootClus());
+            currentLocation = nextAddress;
+            //System.out.println(nextAddress);
+            raf.seek(nextAddress);
+            //search for file name in cluster
+            for (int i = 0; i < 16; i++)//parse each 32 bit potential entry
+            {
+                //System.out.println(currentLocation);
+                byte[] DIR_Name = new byte[11];//short name - 0 -> 11
+                raf.read(DIR_Name, 0, 11);
+                this.currentLocation += 11;
+                // System.out.println(DIR_Name[0]);//TEST
+                String byteString = new String(DIR_Name, "UTF-8");//https://stackoverflow.com/a/18583290
+                String[] splitName = byteString.split(" +");
+                if(splitName.length == 2)
+                {
+                    byteString = splitName[0] + "." + splitName[1];
+                    byteString = byteString.trim();//lowercase?
+                }
+                else
+                {
+                    byteString = byteString.trim();//lowercase?
+                }
+                //System.out.println("This is the directory's name: " + byteString);//TEST
+                if(byteString.equalsIgnoreCase(toDelete))
+                {
+                    //mark it
+                    raf.seek(currentLocation - 11);//go back to beginning
+                    byte b = (byte) 0xE5;
+                    raf.write(b);
+                            /*
+                                test
+
+                            raf.seek(currentLocation - 11);//go back to beginning
+                            System.out.println("Just marked location with " + raf.readByte());*/
+                    return true;
+                }
+                else
+                {
+                    raf.seek(currentLocation + 21);//try next one
+                    currentLocation += 21;
+                }
+            }
+        }
+        return false;
+    }
+
 
     /**
      * Take current free and get next free
@@ -355,8 +378,8 @@ public class Fat32Reader {
         byte[] DIR_Name = new byte[11];//short name - 0 -> 11
         raf.read(DIR_Name, 0, 11);
         this.currentLocation += 11;
-       // System.out.println(DIR_Name[0]);//TEST
-        if(DIR_Name[0] == 0xe5)//TODO CHANGE THIS
+        //System.out.println(DIR_Name[0]);//TEST
+        if(DIR_Name[0] == -27)
         {
             //done with directories
             this.currentLocation += 21;
