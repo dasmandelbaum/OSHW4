@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 public class Fat32Reader {
 
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+    private Directory fs;
     FileHandler fh;
     private String header;
     Boot boot;
@@ -88,16 +89,19 @@ public class Fat32Reader {
         //get number of free clusters
         byte[] FSI_Free_Count = new byte[4];
         fr.numFreeClusters = Integer.parseInt(fr.getValue(raf, FSI_Free_Count, 488, 4), 16);
-        System.out.println(fr.numFreeClusters);
+        //System.out.println(fr.numFreeClusters);
 
         //get first three free cluster numbers
         byte[] FSI_Nxt_Free = new byte[4];
-        fr.firstThreeFreecClusters[0] = Integer.parseInt(fr.getValue(raf, FSI_Nxt_Free, 4, 4), 16);
-        fr.firstThreeFreecClusters[1] = fr.firstThreeFreecClusters[0] + 1; //TODO: IS THIS HOW IT WORKS?
-        fr.firstThreeFreecClusters[2] = fr.firstThreeFreecClusters[1] + 1;
-        System.out.println(fr.firstThreeFreecClusters[0]);
-        System.out.println(fr.firstThreeFreecClusters[1]);
-        System.out.println(fr.firstThreeFreecClusters[2]);
+        int firstFree = Integer.parseInt(fr.getValue(raf, FSI_Nxt_Free, 492, 4), 16);
+        fr.firstThreeFreecClusters[0] = firstFree;
+        int secondFree = fr.getNextFreeCluster(raf, firstFree);
+        fr.firstThreeFreecClusters[1] = secondFree;
+        int thirdFree = fr.getNextFreeCluster(raf, secondFree);
+        fr.firstThreeFreecClusters[2] = thirdFree;
+        //System.out.println(fr.firstThreeFreecClusters[0]);
+        //System.out.println(fr.firstThreeFreecClusters[1]);
+        //System.out.println(fr.firstThreeFreecClusters[2]);
 
         /* Main loop.  You probably want to create a helper function for each command besides quit. */
         Scanner s = new Scanner(System.in);
@@ -168,6 +172,43 @@ public class Fat32Reader {
         raf.close();
 
         /* Success */
+    }
+
+    /**
+     * Take current free and get next free
+     * @param raf
+     * @param currentFree
+     * @return
+     */
+    private int getNextFreeCluster(RandomAccessFile raf, int currentFree) throws IOException
+    {
+        int potentialFreeCluster = currentFree + 1;
+        int nextClusterEntryAddress = getAddress(getFATSecNum(potentialFreeCluster)) + getFATEntOffset(potentialFreeCluster);
+        int endOfFat = 532992;//TODO: change to real number
+        while(nextClusterEntryAddress < endOfFat)
+        {
+            potentialFreeCluster = currentFree + 1;
+            nextClusterEntryAddress = getAddress(getFATSecNum(potentialFreeCluster)) + getFATEntOffset(potentialFreeCluster);
+            System.out.println("Address of fat entry: " + Integer.toHexString(nextClusterEntryAddress));//TEST
+            raf.seek(nextClusterEntryAddress);
+            byte[] value = new byte[4];
+            String valueString = "";
+            raf.read(value, 0, 4);
+            for (int i = value.length - 1; i >= 0; i--) {
+                byte b = value[i];
+                //System.out.printf("0x%02X\n", b);//https://stackoverflow.com/a/1748044//TEST
+                valueString += String.format("%02X", b);
+            }
+            System.out.println("Value in string: " + valueString);//TEST
+            if (valueString.equals("00000000")) {
+                return potentialFreeCluster;
+            }
+            else if(this.numFreeClusters <= 0)
+            {
+                return 0;
+            }
+        }
+        return 0;
     }
 
     /**

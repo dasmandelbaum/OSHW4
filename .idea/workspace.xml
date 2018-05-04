@@ -15,9 +15,23 @@
       <file leaf-file-name="Fat32Reader.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Fat32Reader/src/main/java/os/hw3/Fat32Reader.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="343">
-              <caret line="97" column="73" lean-forward="false" selection-start-line="97" selection-start-column="73" selection-end-line="97" selection-end-column="73" />
-              <folding />
+            <state relative-caret-position="333">
+              <caret line="204" column="13" lean-forward="true" selection-start-line="204" selection-start-column="13" selection-end-line="204" selection-end-column="13" />
+              <folding>
+                <marker date="1525395093854" expanded="false" signature="865:876" ph=" { " />
+                <marker date="1525395093854" expanded="false" signature="890:896" ph=" }" />
+                <marker date="1525395093854" expanded="false" signature="938:949" ph=" { " />
+                <marker date="1525395093854" expanded="false" signature="970:976" ph=" }" />
+                <marker date="1525395093854" expanded="false" signature="7860:7875" ph=" { " />
+                <marker date="1525395093854" expanded="false" signature="7917:7923" ph=" }" />
+                <marker date="1525395093854" expanded="false" signature="9732:9771" ph=" { " />
+                <marker date="1525395093854" expanded="false" signature="9807:9825" ph=" }" />
+                <marker date="1525395093854" expanded="false" signature="25663:25678" ph=" { " />
+                <marker date="1525395093854" expanded="false" signature="25760:25766" ph=" }" />
+                <marker date="1525395093854" expanded="false" signature="25798:25813" ph=" { " />
+                <marker date="1525395093854" expanded="false" signature="25868:25874" ph=" }" />
+                <marker date="1525395093854" expanded="false" signature="26074:26083" ph="&lt;~&gt;" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -38,14 +52,19 @@
       <file leaf-file-name="Directory.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Fat32Reader/src/main/java/os/hw3/Directory.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="120">
-              <caret line="8" column="13" lean-forward="false" selection-start-line="8" selection-start-column="13" selection-end-line="8" selection-end-column="13" />
+            <state relative-caret-position="223">
+              <caret line="21" column="12" lean-forward="false" selection-start-line="21" selection-start-column="8" selection-end-line="21" selection-end-column="12" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
     </leaf>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>size</find>
+    </findStrings>
   </component>
   <component name="GradleLocalSettings">
     <option name="externalProjectsViewState">
@@ -242,12 +261,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1525375914608</updated>
-      <workItem from="1525375916192" duration="4122000" />
+      <workItem from="1525375916192" duration="8940000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="4122000" />
+    <option name="totallyTimeSpent" value="8940000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="47" y="23" width="1393" height="790" extended-state="0" />
@@ -266,7 +285,7 @@
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32886904" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.24944486" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.30273873" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -293,14 +312,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/Fat32Reader/src/main/java/os/hw3/Directory.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="120">
-          <caret line="8" column="13" lean-forward="false" selection-start-line="8" selection-start-column="13" selection-end-line="8" selection-end-column="13" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Fat32Reader/src/main/java/os/hw3/Boot.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="262">
@@ -312,11 +323,33 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/Fat32Reader/src/main/java/os/hw3/Directory.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="223">
+          <caret line="21" column="12" lean-forward="false" selection-start-line="21" selection-start-column="8" selection-end-line="21" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/Fat32Reader/src/main/java/os/hw3/Fat32Reader.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="343">
-          <caret line="97" column="73" lean-forward="false" selection-start-line="97" selection-start-column="73" selection-end-line="97" selection-end-column="73" />
-          <folding />
+        <state relative-caret-position="333">
+          <caret line="204" column="13" lean-forward="true" selection-start-line="204" selection-start-column="13" selection-end-line="204" selection-end-column="13" />
+          <folding>
+            <marker date="1525395093854" expanded="false" signature="865:876" ph=" { " />
+            <marker date="1525395093854" expanded="false" signature="890:896" ph=" }" />
+            <marker date="1525395093854" expanded="false" signature="938:949" ph=" { " />
+            <marker date="1525395093854" expanded="false" signature="970:976" ph=" }" />
+            <marker date="1525395093854" expanded="false" signature="7860:7875" ph=" { " />
+            <marker date="1525395093854" expanded="false" signature="7917:7923" ph=" }" />
+            <marker date="1525395093854" expanded="false" signature="9732:9771" ph=" { " />
+            <marker date="1525395093854" expanded="false" signature="9807:9825" ph=" }" />
+            <marker date="1525395093854" expanded="false" signature="25663:25678" ph=" { " />
+            <marker date="1525395093854" expanded="false" signature="25760:25766" ph=" }" />
+            <marker date="1525395093854" expanded="false" signature="25798:25813" ph=" { " />
+            <marker date="1525395093854" expanded="false" signature="25868:25874" ph=" }" />
+            <marker date="1525395093854" expanded="false" signature="26074:26083" ph="&lt;~&gt;" />
+          </folding>
         </state>
       </provider>
     </entry>
