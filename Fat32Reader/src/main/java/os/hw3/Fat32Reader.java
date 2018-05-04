@@ -193,11 +193,11 @@ public class Fat32Reader {
             {
                 marked = markDirectoryEntries(raf, this.fs.clusters, dir.name);
                 int fat1Address = getAddress(getFATSecNum(1));
-                System.out.println(fat1Address);
-                updateFat(raf, fat1Address, dir.nextClusterNumber);
+                //System.out.println(fat1Address);//TEST
+                updateFat(raf, fat1Address, dir.nextClusterNumber, 1);
                 int fat2Address = (((getAddress(this.boot.getRootDirAddress()) - fat1Address) / 2) + fat1Address);
-                System.out.println(fat2Address);
-                updateFat(raf, fat2Address, dir.nextClusterNumber);
+                //System.out.println(fat2Address);//TEST
+                updateFat(raf, fat2Address, dir.nextClusterNumber, 2);
                 break;
             }
             else if(dir.name.equalsIgnoreCase(fName) && dir.containsFiles == true)
@@ -219,16 +219,15 @@ public class Fat32Reader {
             parseDirectories(raf, this.fs);
         }
 
-        //mark entries in FAT as free (0000000)
-            //update FAT2
-            //update number of free clusters and first free cluster if its earlier than current first free clusters
+
+        //update number of free clusters and first free clusters if its earlier than current first free clusters
     }
 
     private boolean markDirectoryEntries(RandomAccessFile raf, ArrayList<Integer> clusters, String toDelete) throws IOException
     {
         for(int cluster: clusters)
         {
-            System.out.println(cluster);
+            //System.out.println(cluster);
             int nextAddress = getAddress(this.boot.getRootDirAddress() + cluster - this.boot.getBPB_RootClus());
             currentLocation = nextAddress;
             //System.out.println(nextAddress);
@@ -276,17 +275,17 @@ public class Fat32Reader {
         return false;
     }
 
-    private void updateFat(RandomAccessFile raf, int location, int firstCluster) throws IOException
+    private void updateFat(RandomAccessFile raf, int location, int firstCluster, int fatNum) throws IOException
     {
         String valueString = "";
         int nextCluster = firstCluster;
         int clusterEntryAddress = 0;
         while(!valueString.equalsIgnoreCase("0FFFFFF8") && !valueString.equalsIgnoreCase("0FFFFFFF") && !valueString.equalsIgnoreCase("FFFFFFFF") && !valueString.equalsIgnoreCase("00000000"))
         {
-            System.out.println("Resetting fat for cluster " + nextCluster);
+            //System.out.println("Resetting fat for cluster " + nextCluster);
             valueString = "";
             clusterEntryAddress = location + getFATEntOffset(nextCluster);
-            System.out.println("Address of fat entry: " + Integer.toHexString(clusterEntryAddress));//TEST
+            //System.out.println("Address of fat entry: " + Integer.toHexString(clusterEntryAddress));//TEST
             raf.seek(clusterEntryAddress);
             byte[] value = new byte[4];
             raf.read(value, 0, 4);
@@ -296,7 +295,15 @@ public class Fat32Reader {
                 //System.out.printf("0x%02X\n", b);//https://stackoverflow.com/a/1748044//TEST
                 valueString += String.format("%02X", b);
             }
-            System.out.println("Value in string: " + valueString);//TEST
+            if(fatNum == 1) //only update for first fat
+            {
+                numFreeClusters++;
+                if (firstThreeFreecClusters[2] > nextCluster) {
+                    firstThreeFreecClusters[2] = nextCluster;
+                    Arrays.sort(firstThreeFreecClusters);
+                }
+            }
+            //System.out.println("Value in string: " + valueString);//TEST
             if(!valueString.equalsIgnoreCase("0FFFFFF8") && !valueString.equalsIgnoreCase("0FFFFFFF") && !valueString.equalsIgnoreCase("FFFFFFFF") && !valueString.equalsIgnoreCase("00000000"))
             {
                 //there is another cluster to reset
@@ -309,6 +316,7 @@ public class Fat32Reader {
                 byte b = (byte) 0x00;
                 raf.write(b);
             }
+
         }
     }
 
@@ -870,7 +878,7 @@ public class Fat32Reader {
             int clusterNum = Integer.parseInt(valueString, 16);
             if(!valueString.equalsIgnoreCase("0FFFFFF8") && !valueString.equalsIgnoreCase("0FFFFFFF") && !valueString.equalsIgnoreCase("FFFFFFFF") && !valueString.equalsIgnoreCase("00000000"))
             {
-                System.out.println("Cluster number: " + clusterNum);//TEST
+                //System.out.println("Cluster number: " + clusterNum);//TEST
                 clusters.add(clusterNum);
             }
             else
