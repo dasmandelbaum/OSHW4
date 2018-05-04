@@ -1,15 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE log SYSTEM "logger.dtd">
 <log>
-<record>
-  <date>2018-05-04T09:47:58</date>
-  <millis>1525441678046</millis>
-  <sequence>0</sequence>
-  <logger>global</logger>
-  <level>WARNING</level>
-  <class>os.hw3.Fat32Reader</class>
-  <method>delete</method>
-  <thread>1</thread>
-  <message>dir is directory and cannot be deleted.</message>
-</record>
 </log>
