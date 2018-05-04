@@ -2,6 +2,7 @@ package os.hw3;
 
 import java.io.*;
 import java.lang.reflect.Array;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -81,11 +82,13 @@ public class Fat32Reader {
         int n = fr.boot.getBPB_RootClus();//fr.fs.nextClusterNumber;
         //System.out.println("Root clus: " + n);//TEST
         fr.fs.clusters = fr.getClusters(raf, fr.getFATSecNum(n), fr.getFATEntOffset(n), fr.fs.nextClusterNumber);
+        raf.seek(startOfRootDirectory + 32);
         fr.parseDirectories(raf,fr.fs);
 
         fr.fs.nextClusterNumber = fr.boot.getBPB_RootClus();//added late
         fr.fs.clusters.clear();
         fr.fs.clusters.add(fr.boot.getBPB_RootClus());//added late
+
         /*Get free cluster indices and count*/
 
         //go to BPB_FSInfo location - FSINFO sector
@@ -99,8 +102,10 @@ public class Fat32Reader {
         //get first three free cluster numbers
         byte[] FSI_Nxt_Free = new byte[4];
         int firstFree = Integer.parseInt(fr.getValue(raf, FSI_Nxt_Free, 492, 4), 16);
+       // System.out.println("this is the first free cluster: " + firstFree);
         fr.firstThreeFreecClusters[0] = firstFree;
         int secondFree = fr.getNextFreeCluster(raf, firstFree);
+       // System.out.println("this is the second free cluster: " + secondFree);
         fr.firstThreeFreecClusters[1] = secondFree;
         int thirdFree = fr.getNextFreeCluster(raf, secondFree);
         fr.firstThreeFreecClusters[2] = thirdFree;
@@ -207,7 +212,7 @@ public class Fat32Reader {
                 break;
             }
         }
-        if(marked)//marking worked, now refresh parent object
+        if(marked)//marking worked, now refresh parent object and update fsinfo sector fields
         {
             this.fs.files.clear();
             if(this.fs.parentDirectory == null)//root
@@ -217,6 +222,47 @@ public class Fat32Reader {
                 raf.seek(this.currentLocation);
             }
             parseDirectories(raf, this.fs);
+            this.currentLocation = this.getAddress(this.boot.getBPB_FSInfo()) + 488;
+            raf.seek(this.currentLocation);
+            //fill up with numfreecluster
+            String bytes = Integer.toHexString(numFreeClusters);
+            while(bytes.length() < 8)
+            {
+                bytes = "0".concat(bytes);
+            }
+            //System.out.println(bytes);
+            for(int i = 8; i > 1; i = i - 2)
+            {
+                byte b = (byte) Integer.parseInt(bytes.substring(i - 2, i), 16);
+                raf.write(b);
+                //System.out.println("FSI FREE COUNT " + b);//TEST
+            }
+            //reset first  free cluster number in fsinfo sector
+            byte[] FSI_Nxt_Free = new byte[4];
+            //492, 4
+            bytes = Integer.toHexString(firstThreeFreecClusters[0]);
+            while(bytes.length() < 8)
+            {
+                bytes = "0".concat(bytes);
+            }
+            //System.out.println(bytes);
+            for(int i = 8; i > 1; i = i - 2)
+            {
+                byte b = (byte) Integer.parseInt(bytes.substring(i - 2, i), 16);
+                raf.write(b);
+                //System.out.println("FSI FREE COUNT " + b);
+            }
+            //TODO: RECALIBRATE?
+            //firstThreeFreecClusters[1] = getNextFreeCluster(raf, firstThreeFreecClusters[0]);
+            //firstThreeFreecClusters[2] = getNextFreeCluster(raf, firstThreeFreecClusters[1]);
+//            /*
+//            TEST
+//             */
+//            this.currentLocation = this.getAddress(this.boot.getBPB_FSInfo()) + 492;
+//            raf.seek(this.currentLocation);
+//            FSI_Nxt_Free = new byte[4];
+//            int firstFree = Integer.parseInt(this.getValue(raf, FSI_Nxt_Free, 0, 4), 16);
+//            System.out.println(firstFree);
         }
 
 
@@ -295,7 +341,7 @@ public class Fat32Reader {
                 //System.out.printf("0x%02X\n", b);//https://stackoverflow.com/a/1748044//TEST
                 valueString += String.format("%02X", b);
             }
-            if(fatNum == 1) //only update for first fat
+            if(fatNum == 1  && nextCluster > this.boot.getBPB_RootClus()) //only update for first fat
             {
                 numFreeClusters++;
                 if (firstThreeFreecClusters[2] > nextCluster) {
@@ -329,12 +375,12 @@ public class Fat32Reader {
      */
     private int getNextFreeCluster(RandomAccessFile raf, int currentFree) throws IOException
     {
-        int potentialFreeCluster = currentFree + 1;
+        int potentialFreeCluster = currentFree;// + 1;
         int nextClusterEntryAddress = getAddress(getFATSecNum(potentialFreeCluster)) + getFATEntOffset(potentialFreeCluster);
         int endOfFat = 532992;//TODO: change to real number
         while(nextClusterEntryAddress < endOfFat)
         {
-            potentialFreeCluster = currentFree + 1;
+            potentialFreeCluster = potentialFreeCluster + 1;
             nextClusterEntryAddress = getAddress(getFATSecNum(potentialFreeCluster)) + getFATEntOffset(potentialFreeCluster);
             //System.out.println("Address of fat entry: " + Integer.toHexString(nextClusterEntryAddress));//TEST
             raf.seek(nextClusterEntryAddress);
@@ -429,7 +475,7 @@ public class Fat32Reader {
         byte[] DIR_Name = new byte[11];//short name - 0 -> 11
         raf.read(DIR_Name, 0, 11);
         this.currentLocation += 11;
-        //System.out.println(DIR_Name[0]);//TEST
+        //System.out.println(currentLocation);//TEST
         if(DIR_Name[0] == -27)
         {
             //done with directories
@@ -437,7 +483,7 @@ public class Fat32Reader {
             raf.seek(this.currentLocation);
             return false;
         }
-        else if(DIR_Name[0] == 0x00)
+        else if(DIR_Name[0] == 0)
         {
             dir.name = "done";
             return true;
