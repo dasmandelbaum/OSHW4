@@ -59,7 +59,7 @@ public class Fat32Reader {
         File file = new File(args[0]);
         //System.out.println("File exists: " + file.exists());//TEST
         //System.out.println("Fat32 file path: " + file.getAbsolutePath());//TEST
-        RandomAccessFile raf = new RandomAccessFile(file, "r");
+        RandomAccessFile raf = new RandomAccessFile(file, "rw");
         /* Parse boot sector and get information */
         fr.boot = new Boot(raf, fr);
 
@@ -74,6 +74,7 @@ public class Fat32Reader {
         Directory dir = new Directory();
         fr.parseCluster(raf, dir);//just for the root
 
+
         fr.fs = dir;//set to current directory
         fr.fs.parentDirectory = null;
         int n = fr.boot.getBPB_RootClus();//fr.fs.nextClusterNumber;
@@ -81,6 +82,9 @@ public class Fat32Reader {
         fr.fs.clusters = fr.getClusters(raf, fr.getFATSecNum(n), fr.getFATEntOffset(n), fr.fs.nextClusterNumber);
         fr.parseDirectories(raf,fr.fs);
 
+        fr.fs.nextClusterNumber = fr.boot.getBPB_RootClus();//added late
+        fr.fs.clusters.clear();
+        fr.fs.clusters.add(fr.boot.getBPB_RootClus());//added late
         /*Get free cluster indices and count*/
 
         //go to BPB_FSInfo location - FSINFO sector
@@ -129,6 +133,10 @@ public class Fat32Reader {
                 {
                     fr.stat(fName, raf);
                 }
+                else if(command.equalsIgnoreCase("delete"))
+                {
+                    fr.delete(fName, raf);
+                }
                 else
                 {
                     System.out.println("Unrecognized command.");
@@ -174,6 +182,71 @@ public class Fat32Reader {
         /* Success */
     }
 
+    private void delete(String fName, RandomAccessFile raf) throws IOException
+    {
+        //mark file as deleted in current directory
+        for(Directory dir: this.fs.files)
+        {
+            if (dir.name.equalsIgnoreCase(fName) && dir.containsFiles == false)//dealing with file not directory
+            {
+                for(int cluster: this.fs.clusters)
+                {
+                    System.out.println(cluster);
+                    int nextAddress = getAddress(this.boot.getRootDirAddress() + cluster - this.boot.getBPB_RootClus());
+                    currentLocation = nextAddress;
+                    System.out.println(nextAddress);
+                    raf.seek(nextAddress);
+                    //search for file name in cluster
+                    for (int i = 0; i < 16; i++)//parse each 32 bit potential entry
+                    {
+                        System.out.println(currentLocation);
+                        byte[] DIR_Name = new byte[11];//short name - 0 -> 11
+                        raf.read(DIR_Name, 0, 11);
+                        this.currentLocation += 11;
+                        // System.out.println(DIR_Name[0]);//TEST
+                        String byteString = new String(DIR_Name, "UTF-8");//https://stackoverflow.com/a/18583290
+                        String[] splitName = byteString.split(" +");
+                        if(splitName.length == 2)
+                        {
+                            byteString = splitName[0] + "." + splitName[1];
+                            byteString = byteString.trim();//lowercase?
+                        }
+                        else
+                        {
+                            byteString = byteString.trim();//lowercase?
+                        }
+                        System.out.println("This is the directory's name: " + byteString);//TEST
+                        if(byteString.equalsIgnoreCase(dir.name))
+                        {
+                            //mark it
+                            raf.seek(currentLocation - 11);//go back to beginning
+                            byte b = 05;
+                            raf.write(b);
+                            /*
+                                test
+                             */
+                            raf.seek(currentLocation - 11);//go back to beginning
+                            System.out.println("Just marked location with " + raf.readByte());
+                            break;
+                        }
+                        else
+                        {
+                            raf.seek(currentLocation + 21);//try next one
+                            currentLocation += 21;
+                        }
+                    }
+                }
+
+            }
+        }
+
+        //mark entries in FAT as free (0000000)
+            //update FAT2
+            //update number of free clusters and first free cluster if its earlier than current first free clusters
+            //mark as deleted by setting DIR_Name[0] = 0xE5 (0x00)?
+            //delete directory object from parent directory
+    }
+
     /**
      * Take current free and get next free
      * @param raf
@@ -189,7 +262,7 @@ public class Fat32Reader {
         {
             potentialFreeCluster = currentFree + 1;
             nextClusterEntryAddress = getAddress(getFATSecNum(potentialFreeCluster)) + getFATEntOffset(potentialFreeCluster);
-            System.out.println("Address of fat entry: " + Integer.toHexString(nextClusterEntryAddress));//TEST
+            //System.out.println("Address of fat entry: " + Integer.toHexString(nextClusterEntryAddress));//TEST
             raf.seek(nextClusterEntryAddress);
             byte[] value = new byte[4];
             String valueString = "";
@@ -199,7 +272,7 @@ public class Fat32Reader {
                 //System.out.printf("0x%02X\n", b);//https://stackoverflow.com/a/1748044//TEST
                 valueString += String.format("%02X", b);
             }
-            System.out.println("Value in string: " + valueString);//TEST
+            //System.out.println("Value in string: " + valueString);//TEST
             if (valueString.equals("00000000")) {
                 return potentialFreeCluster;
             }
@@ -290,7 +363,7 @@ public class Fat32Reader {
             raf.seek(this.currentLocation);
             return false;
         }
-        else if(DIR_Name[0] == 00)
+        else if(DIR_Name[0] == 0x00)
         {
             dir.name = "done";
             return true;
