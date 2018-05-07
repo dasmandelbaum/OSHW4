@@ -143,11 +143,19 @@ public class Fat32Reader {
                 {
                     fr.delete(fName, raf);
                 }
+                
                 else
                 {
                     System.out.println("Unrecognized command.");
                 }
             }
+            
+            else if(inputParts.length == 3 && command.equalsIgnoreCase("newfile")) 
+            {
+            		System.out.println("newFile!!!");
+            		fr.newFile(inputParts[1], inputParts[2], raf);
+            }
+        
             else if(inputParts.length == 4 && command.equalsIgnoreCase("read"))
             {
                 fr.read(raf, inputParts[1], inputParts[2], inputParts[3]);
@@ -187,6 +195,139 @@ public class Fat32Reader {
 
         /* Success */
     }
+    
+    private void newFile(String fileName, String size, RandomAccessFile raf) throws IOException 
+    {
+    		//FIX THE PARENT DIRECTORY
+    	
+   	
+    		//make create a new file with the given name 
+    	
+    	
+    		//go through the parentDirectory in the data region and look for an open 32
+   		int start32 = parentDirectoryAdd(fileName, size, raf);
+   		
+   		//if there is no space then you have to add a new cluster
+   		if(start32 == -1) {
+   			//find the first available cluster
+   			int freeCluster = firstThreeFreecClusters[0];
+   			
+   			//DIDN'T FINISH YET- go to that cluster in the data region and add new file with the given name in the first 32 bytes 
+            int nextAddress = getAddress(this.boot.getRootDirAddress() + freeCluster - this.boot.getBPB_RootClus());
+            currentLocation = nextAddress;
+   			
+   			//replace it with the next free cluster
+   	        int nextFree = getNextFreeCluster(raf, firstThreeFreecClusters[2]);
+   	        firstThreeFreecClusters[0] = nextFree;
+            Arrays.sort(firstThreeFreecClusters);
+   			
+   			//update numFreeClusters (subtract 1)
+   			numFreeClusters--;
+            
+   			//update FAT (both)- this cluster will be FFFFFFFF and the previous last cluster will be the current last cluster
+            int fat1Address = getAddress(getFATSecNum(1));
+   			fixFat(freeCluster, raf, fat1Address);
+
+            
+            int fat2Address = (((getAddress(this.boot.getRootDirAddress()) - fat1Address) / 2) + fat1Address);
+   			fixFat(freeCluster, raf, fat2Address);
+ 			
+   		}
+   		
+   		//if there is space then add newFile there
+   		else {
+   			
+   		}
+   		
+   		//FIX THE ACTUAL FILE
+   		   		
+   		//figure out how many clusters are needed based on the size of the file (and how much of the last file will be used)
+   		
+   		//get that amount of free clusters (update numFreeClusters and firstThreeFreeClusters each time you use a cluster)
+   		
+   		//go to the clusters in the data region and add the file (make sure not to add too much to the last cluster)
+   		
+   		//go to each cluster in the fat and set them to the next cluster (FFFFFFFF for the last cluster)
+   		
+    }
+    
+	//update FAT (both)- this cluster will be FFFFFFFF and the previous last cluster will be the current last cluster
+    private void fixFat(int freeCluster, RandomAccessFile raf, int location) throws IOException 
+    {
+		//previous last cluster
+		int previousLastCluster = this.fs.clusters.get(this.fs.clusters.size()-1);
+
+		//Change the next cluster number to hex and replace FFFFFFFF and add zeros is necessary 
+		String bytes = Integer.toHexString(freeCluster);
+        while(bytes.length() < 8)
+        {
+            bytes = "0".concat(bytes);
+        }
+        
+        //Go to location of last cluster in fat and replace it with next cluster number in hex
+        int clusterEntryAddress = location + getFATEntOffset(previousLastCluster);
+        raf.seek(clusterEntryAddress);
+
+        for(int i = 8; i > 1; i = i - 2)
+        {
+            byte b = (byte) Integer.parseInt(bytes.substring(i - 2, i), 16);            
+            raf.write(b);
+            //System.out.println("FSI FREE COUNT " + b);//TEST
+        }
+			
+		
+		//current last cluster
+        //Go to location of the current last cluster
+        raf.seek(location + getFATEntOffset(freeCluster));
+        
+        //change value from 00000000 to FFFFFFFF
+	    for(int i = 0; i < 4; i++)
+	    {
+            byte b = (byte) 0xFF;
+            raf.write(b);
+	    }    	
+    }
+    
+    //returns the beginning of the 32 byte space that we will be adding to
+    private int parentDirectoryAdd(String fileName, String size, RandomAccessFile raf) throws IOException 
+    {
+	    	 for(int cluster: this.fs.clusters)
+	     {
+             System.out.println("Cluster number: " + cluster);
+             int nextAddress = getAddress(this.boot.getRootDirAddress() + cluster - this.boot.getBPB_RootClus());
+             currentLocation = nextAddress;
+             System.out.println("Address: " + nextAddress);
+             raf.seek(nextAddress);
+             //search for file name in cluster
+             for (int i = 0; i < 16; i++)//parse each 32 bit potential entry
+             {
+                 //System.out.println(currentLocation);
+                 byte[] firstTwoBytes = new byte[2];//short name - 0 -> 11
+                 raf.read(firstTwoBytes, 0, 2);
+                 System.out.println("This is my current location: " + currentLocation);
+                 this.currentLocation += 2;
+                 System.out.println("this is the first byte: " + firstTwoBytes[0]);//TEST
+                 
+                	 
+                 if(firstTwoBytes[0] == -27 || firstTwoBytes[0] == 0)
+                 {
+                     currentLocation =- 2; 
+                	 	 raf.seek(currentLocation);//go back to beginning
+                     return currentLocation;
+                           /*     test
+
+                             raf.seek(currentLocation - 11);//go back to beginning
+                             System.out.println("Just marked location with " + raf.readByte()); */
+                 }
+                 else
+                 {
+                     raf.seek(currentLocation + 30);//try next one
+                     currentLocation += 30;
+                 }
+             }
+         }
+         return -1;
+     } 
 
     private void delete(String fName, RandomAccessFile raf) throws IOException
     {
