@@ -1,6 +1,6 @@
-# OSHW3
+# OSHW4
 
-## Jeffrey Hagler and David Mandelbaum - PART 2 SUBMISSION (4/22/18)
+## Jeffrey Hagler and David Mandelbaum - (5/14/18)
 ## A listing of all files/directories in your submission and a brief description of each
   * Fat32Reader class - main command center for parsing file and user-run navigation
   * Boot class - used for info command
@@ -15,6 +15,9 @@
  5. cd
  6. read
  7. ls
+ 8. freelist
+ 9. delete
+ 10. newfile
 
 ##	Instructions for running program
  1. Open the zip.
