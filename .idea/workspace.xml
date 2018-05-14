@@ -21,8 +21,8 @@
       <file leaf-file-name="Fat32Reader.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Fat32Reader/src/main/java/os/hw3/Fat32Reader.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="186">
-              <caret line="382" column="15" lean-forward="false" selection-start-line="382" selection-start-column="15" selection-end-line="382" selection-end-column="15" />
+            <state relative-caret-position="106">
+              <caret line="197" column="0" lean-forward="true" selection-start-line="197" selection-start-column="0" selection-end-line="197" selection-end-column="0" />
               <folding>
                 <element signature="e#7658#7667#0" expanded="true" />
                 <element signature="method#isDirectory#0;class#Fat32Reader#0" expanded="false" />
@@ -31,7 +31,7 @@
                 <element signature="method#volume#0;class#Fat32Reader#0" expanded="false" />
                 <element signature="method#getClusters#0;class#Fat32Reader#0" expanded="false" />
                 <element signature="method#getFreelist#0;class#Fat32Reader#0" expanded="false" />
-                <marker date="1526336129344" expanded="true" signature="43986:43995" ph="&lt;~&gt;" />
+                <marker date="1526337722946" expanded="true" signature="44128:44137" ph="&lt;~&gt;" />
               </folding>
             </state>
           </provider>
@@ -75,6 +75,7 @@
       <find>getNextFreeCluster</find>
       <find>updatefat</find>
       <find>getFirstFreeCluster</find>
+      <find>first</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -288,12 +289,12 @@
       <workItem from="1525375916192" duration="12865000" />
       <workItem from="1525439472948" duration="17188000" />
       <workItem from="1525744802190" duration="7801000" />
-      <workItem from="1526329164734" duration="6788000" />
+      <workItem from="1526329164734" duration="8530000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="44642000" />
+    <option name="totallyTimeSpent" value="46384000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -316,7 +317,7 @@
       <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25744048" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.42708334" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32886904" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
@@ -327,7 +328,7 @@
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Theme Preview" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.35714287" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.44642857" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -345,7 +346,7 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="23" />
+      <option name="time" value="26" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -362,7 +363,7 @@
             <element signature="method#volume#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#getClusters#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#getFreelist#0;class#Fat32Reader#0" expanded="false" />
-            <marker date="1526336129344" expanded="true" signature="43986:43995" ph="&lt;~&gt;" />
+            <marker date="1526337722946" expanded="true" signature="44128:44137" ph="&lt;~&gt;" />
           </folding>
         </state>
       </provider>
@@ -387,7 +388,7 @@
             <element signature="method#volume#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#getClusters#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#getFreelist#0;class#Fat32Reader#0" expanded="false" />
-            <marker date="1526336129344" expanded="true" signature="43986:43995" ph="&lt;~&gt;" />
+            <marker date="1526337722946" expanded="true" signature="44128:44137" ph="&lt;~&gt;" />
           </folding>
         </state>
       </provider>
@@ -420,7 +421,7 @@
             <element signature="method#volume#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#getClusters#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#getFreelist#0;class#Fat32Reader#0" expanded="false" />
-            <marker date="1526336129344" expanded="true" signature="43986:43995" ph="&lt;~&gt;" />
+            <marker date="1526337722946" expanded="true" signature="44128:44137" ph="&lt;~&gt;" />
           </folding>
         </state>
       </provider>
@@ -451,8 +452,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Fat32Reader/src/main/java/os/hw3/Fat32Reader.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="186">
-          <caret line="382" column="15" lean-forward="false" selection-start-line="382" selection-start-column="15" selection-end-line="382" selection-end-column="15" />
+        <state relative-caret-position="106">
+          <caret line="197" column="0" lean-forward="true" selection-start-line="197" selection-start-column="0" selection-end-line="197" selection-end-column="0" />
           <folding>
             <element signature="e#7658#7667#0" expanded="true" />
             <element signature="method#isDirectory#0;class#Fat32Reader#0" expanded="false" />
@@ -461,7 +462,7 @@
             <element signature="method#volume#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#getClusters#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#getFreelist#0;class#Fat32Reader#0" expanded="false" />
-            <marker date="1526336129344" expanded="true" signature="43986:43995" ph="&lt;~&gt;" />
+            <marker date="1526337722946" expanded="true" signature="44128:44137" ph="&lt;~&gt;" />
           </folding>
         </state>
       </provider>

@@ -206,11 +206,10 @@ public class Fat32Reader {
         //seek to first free cluster, then continue in next free if run out of room
         ArrayList<Integer> clusters = new ArrayList<Integer>();
         clusters = writeNewFileClusters(size, raf, clusters);
-        for (int cluster: clusters)
-        {
-            System.out.println("cluster: " + cluster);
-        }
-        //writeToFat(raf, clusters);
+        System.out.println("Clusters size: " + clusters.size());
+        writeToFat(raf, clusters, fat1Address);
+        writeToFat(raf, clusters, fat2Address);
+
 
         // FIX THE PARENT DIRECTORY
         //TODO: create a new file with the given name
@@ -282,7 +281,7 @@ public class Fat32Reader {
             currentLocation++;
             j = (j + 1) % toWrite.length();
 
-            System.out.println("count: " + count + "...i: " + i + "...j: " + j);
+            //System.out.println("count: " + count + "...i: " + i + "...j: " + j);
             if(count >= this.boot.getBPB_BytesPerSec())
             {
                 raf.seek(getFirstFreeCluster(clusters, raf));
@@ -301,32 +300,33 @@ public class Fat32Reader {
         return clusters;
     }
 
-    private void writeToFat(RandomAccessFile raf, ArrayList<Integer> clusters) throws IOException
+    private void writeToFat(RandomAccessFile raf, ArrayList<Integer> clusters, int fatAddress) throws IOException
     {
         //go to each cluster in each fat and set them to the next cluster (FFFFFFFF for the last cluster)
         for(int i = 0; i < clusters.size() - 1; i++)// cluster: clusters)
         {
             int cluster = clusters.get(i);
-            int nextAddress = fat1Address + getFATEntOffset(cluster);
+            int nextAddress = fatAddress + getFATEntOffset(cluster);
             //write address of next cluster
             raf.seek(nextAddress);
-            int nextClusterInFile = getFATEntOffset(clusters.get(i + 1));
+            currentLocation = nextAddress;
+            int nextClusterInFile = clusters.get(i + 1);
+            System.out.println("Need to write next cluster: " + nextClusterInFile + " at location " + nextAddress);
             String bytes = Integer.toHexString(nextClusterInFile);
             while(bytes.length() < 8)
             {
                 bytes = "0".concat(bytes);
             }
-            //System.out.println(bytes);
-            for(int m = 8; m > 1; m = i - 2)
+            System.out.println("Bytes: " + bytes);
+            for(int m = 8; m > 1; m = m - 2)
             {
                 byte b = (byte) Integer.parseInt(bytes.substring(m - 2, m), 16);
                 raf.write(b);
             }
         }
         int cluster = clusters.get(clusters.size() - 1);
-        int nextAddress = fat1Address + getFATEntOffset(cluster);
+        int nextAddress = fatAddress + getFATEntOffset(cluster);
         raf.seek(nextAddress);
-        //write address of next cluster
         //change value from 00000000 to FFFFFFFF
         for(int i = 0; i < 4; i++)
         {
