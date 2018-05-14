@@ -206,7 +206,11 @@ public class Fat32Reader {
         //seek to first free cluster, then continue in next free if run out of room
         ArrayList<Integer> clusters = new ArrayList<Integer>();
         clusters = writeNewFileClusters(size, raf, clusters);
-        writeToFat(raf, clusters);
+        for (int cluster: clusters)
+        {
+            System.out.println("cluster: " + cluster);
+        }
+        //writeToFat(raf, clusters);
 
         // FIX THE PARENT DIRECTORY
         //TODO: create a new file with the given name
@@ -248,46 +252,57 @@ public class Fat32Reader {
    		
     }
 
-    private ArrayList<Integer> writeNewFileClusters(String size, RandomAccessFile raf, ArrayList<Integer> clusters) throws IOException {
-        int nextAddress = getFirstFreeCluster(clusters, raf);
-
-        //replace it with the next free cluster
+    private void resetFreeClusters(RandomAccessFile raf) throws IOException
+    {
         int nextFree = getNextFreeCluster(raf, firstThreeFreecClusters[2]);
         firstThreeFreecClusters[0] = nextFree;
         Arrays.sort(firstThreeFreecClusters);
-        //TODO:clean out free cluster
+        numFreeClusters--;
+    }
+
+    private ArrayList<Integer> writeNewFileClusters(String size, RandomAccessFile raf, ArrayList<Integer> clusters) throws IOException
+    {
+        int nextAddress = getFirstFreeCluster(clusters, raf);
 
         raf.seek(nextAddress);
         currentLocation = nextAddress;
+        int totalToWrite = Integer.parseInt(size);
+        //System.out.println("size to write: " + totalToWrite);
+        String toWrite = "New File.\r\n";
         int count = 0;
-        for (int i = 0; i < Integer.parseInt(size); i += 13)
+        int j = 0;
+        for (int i = 0; i < totalToWrite; i++)//toWrite.length())
         {
-            if(count + 13 > this.boot.getBPB_BytesPerSec())
+            char c = toWrite.charAt(j);
+            String charToWrite = Integer.toHexString(c);
+            //System.out.println("About to write: " + charToWrite);
+            byte b = (byte) Integer.parseInt(charToWrite, 16);
+            raf.write(b);
+            count++;
+            currentLocation++;
+            j = (j + 1) % toWrite.length();
+
+            System.out.println("count: " + count + "...i: " + i + "...j: " + j);
+            if(count >= this.boot.getBPB_BytesPerSec())
             {
                 raf.seek(getFirstFreeCluster(clusters, raf));
                 count = 0;
             }
-            System.out.println("writing at " + currentLocation);
-            String toWrite = "New File.\r\n";
-            for(char c : toWrite.toCharArray())
+            //System.out.println("writing at " + currentLocation);
+        }
+        if(count < this.boot.getBPB_BytesPerSec())//need to overwrite the rest of old file
+        {
+            for(int m = count; m < this.boot.getBPB_BytesPerSec(); m++)
             {
-                String charToWrite = Integer.toHexString(c);
-                System.out.println("About to write: " + charToWrite);
-                byte b = (byte) Integer.parseInt(charToWrite, 16);
+                byte b = (byte) 0x00;
                 raf.write(b);
             }
-            /*byte[] b = toWrite.getBytes(StandardCharsets.US_ASCII);//https://stackoverflow.com/a/5688062
-            for(int j = 0; j < b.length; j++)
-            {
-                System.out.println("About to write: " + b[j]);
-                raf.write(b[j]);
-            }*/
-            currentLocation += 13;
         }
         return clusters;
     }
 
-    private void writeToFat(RandomAccessFile raf, ArrayList<Integer> clusters) throws IOException {
+    private void writeToFat(RandomAccessFile raf, ArrayList<Integer> clusters) throws IOException
+    {
         //go to each cluster in each fat and set them to the next cluster (FFFFFFFF for the last cluster)
         for(int i = 0; i < clusters.size() - 1; i++)// cluster: clusters)
         {
@@ -362,19 +377,19 @@ public class Fat32Reader {
     {
         for(int cluster: this.fs.clusters)
         {
-             System.out.println("Cluster number: " + cluster);
+             //System.out.println("Cluster number: " + cluster);
              int nextAddress = getAddress(this.boot.getRootDirAddress() + cluster - this.boot.getBPB_RootClus());
              currentLocation = nextAddress;
-             System.out.println("Address: " + nextAddress);
+             //System.out.println("Address: " + nextAddress);
              raf.seek(nextAddress);
              //search for file name in cluster
              for (int i = 0; i < 16; i++)//parse each 32 bit potential entry
              {
                  //System.out.println(currentLocation);
                  byte firstByte = raf.readByte();
-                 System.out.println("This is my current location: " + currentLocation);
+                 //System.out.println("This is my current location: " + currentLocation);
                  this.currentLocation += 1;
-                 System.out.println("this is the first byte: " + firstByte);//TEST
+                 //System.out.println("this is the first byte: " + firstByte);//TEST
                  if(firstByte == -27 || firstByte == 0)//found open space in parent
                  {
                      currentLocation -= 1;
@@ -399,9 +414,7 @@ public class Fat32Reader {
         //raf.seek(nextAddress);
 
         //replace it with the next free cluster
-        int nextFree = getNextFreeCluster(raf, firstThreeFreecClusters[2]);
-        firstThreeFreecClusters[0] = nextFree;
-        Arrays.sort(firstThreeFreecClusters);
+        resetFreeClusters(raf);
         return nextAddress;
     }
 
