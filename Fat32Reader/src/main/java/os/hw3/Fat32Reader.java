@@ -201,6 +201,11 @@ public class Fat32Reader {
     
     private void newFile(String fileName, String size, RandomAccessFile raf) throws IOException 
     {
+        if(hasFile(fileName))
+        {
+            LOGGER.log(Level.WARNING, fileName + " is already present in directory and cannot be added again.");
+            System.out.println("Error: cannot add file with existing name");
+        }
         //FIX THE ACTUAL FILE
         //go to the clusters in the data region and add the file (make sure not to add too much to the last cluster)
         //seek to first free cluster, then continue in next free if run out of room
@@ -210,7 +215,17 @@ public class Fat32Reader {
         writeToFat(raf, clusters, fat1Address);
         writeToFat(raf, clusters, fat2Address);
 
+        Directory newFile = new Directory();
+        newFile.name = fileName;
+        newFile.clusters = clusters;
+        newFile.nextClusterNumber = clusters.get(0);
+        newFile.parentDirectory = this.fs;
+        newFile.size = Integer.parseInt(size);
+        newFile.containsFiles = false;
+        newFile.attributes = "ATTR_ARCHIVE";
+        byte[] childEntry = getEntryForParent(newFile);
 
+        //TODO: ADD TO PARENT
         // FIX THE PARENT DIRECTORY
         //TODO: create a new file with the given name
 
@@ -249,6 +264,45 @@ public class Fat32Reader {
    		
 
    		
+    }
+
+    private byte[] getEntryForParent(Directory newFile)
+    {
+        byte[] entryToReturn = new byte[32];
+        String[] nameParts = newFile.name.split("\\.");
+        String nameForEntry = "";
+        int length = nameParts[0].length() + nameParts[1].length();
+        if(length < 11)
+        {
+            nameForEntry = (nameParts[0].toUpperCase());
+            for(int i = 0; i < 11 - length; i++)
+            {
+                nameForEntry += " ";
+            }
+            nameForEntry += nameParts[1].toUpperCase();
+        }
+        System.out.println(nameForEntry);
+        for(int i = 0; i < 11; i++)
+        {
+            char c = nameForEntry.charAt(i);
+            String charToWrite = Integer.toHexString(c);
+            System.out.println("About to write: " + charToWrite);
+            byte b = (byte) Integer.parseInt(charToWrite, 16);
+            entryToReturn[i] = b;
+        }
+        return entryToReturn;
+    }
+
+    private boolean hasFile(String newName)
+    {
+        for(Directory d: this.fs.files)
+        {
+            if(d.name.equalsIgnoreCase(newName))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void resetFreeClusters(RandomAccessFile raf) throws IOException

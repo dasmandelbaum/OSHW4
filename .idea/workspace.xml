@@ -21,17 +21,17 @@
       <file leaf-file-name="Fat32Reader.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Fat32Reader/src/main/java/os/hw3/Fat32Reader.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="106">
-              <caret line="197" column="0" lean-forward="true" selection-start-line="197" selection-start-column="0" selection-end-line="197" selection-end-column="0" />
+            <state relative-caret-position="318">
+              <caret line="292" column="29" lean-forward="true" selection-start-line="292" selection-start-column="29" selection-end-line="292" selection-end-column="29" />
               <folding>
-                <element signature="e#7658#7667#0" expanded="true" />
+                <element signature="e#7898#7907#0" expanded="true" />
                 <element signature="method#isDirectory#0;class#Fat32Reader#0" expanded="false" />
                 <element signature="method#stat#0;class#Fat32Reader#0" expanded="false" />
                 <element signature="method#printStats#0;class#Fat32Reader#0" expanded="false" />
                 <element signature="method#volume#0;class#Fat32Reader#0" expanded="false" />
                 <element signature="method#getClusters#0;class#Fat32Reader#0" expanded="false" />
                 <element signature="method#getFreelist#0;class#Fat32Reader#0" expanded="false" />
-                <marker date="1526337722946" expanded="true" signature="44128:44137" ph="&lt;~&gt;" />
+                <marker date="1526341743873" expanded="true" signature="45977:45986" ph="&lt;~&gt;" />
               </folding>
             </state>
           </provider>
@@ -40,7 +40,7 @@
       <file leaf-file-name="Boot.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Fat32Reader/src/main/java/os/hw3/Boot.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="540">
+            <state relative-caret-position="374">
               <caret line="37" column="37" lean-forward="false" selection-start-line="37" selection-start-column="37" selection-end-line="37" selection-end-column="37" />
               <folding />
             </state>
@@ -50,8 +50,8 @@
       <file leaf-file-name="Directory.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Fat32Reader/src/main/java/os/hw3/Directory.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="315">
-              <caret line="21" column="12" lean-forward="false" selection-start-line="21" selection-start-column="8" selection-end-line="21" selection-end-column="12" />
+            <state relative-caret-position="465">
+              <caret line="31" column="5" lean-forward="true" selection-start-line="31" selection-start-column="5" selection-end-line="31" selection-end-column="5" />
               <folding />
             </state>
           </provider>
@@ -76,6 +76,7 @@
       <find>updatefat</find>
       <find>getFirstFreeCluster</find>
       <find>first</find>
+      <find>first byte</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -289,12 +290,12 @@
       <workItem from="1525375916192" duration="12865000" />
       <workItem from="1525439472948" duration="17188000" />
       <workItem from="1525744802190" duration="7801000" />
-      <workItem from="1526329164734" duration="8530000" />
+      <workItem from="1526329164734" duration="11288000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="46384000" />
+    <option name="totallyTimeSpent" value="49142000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -317,7 +318,7 @@
       <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.42708334" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32440478" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32886904" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
@@ -356,14 +357,14 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="e#7658#7667#0" expanded="true" />
+            <element signature="e#7898#7907#0" expanded="true" />
             <element signature="method#isDirectory#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#stat#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#printStats#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#volume#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#getClusters#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#getFreelist#0;class#Fat32Reader#0" expanded="false" />
-            <marker date="1526337722946" expanded="true" signature="44128:44137" ph="&lt;~&gt;" />
+            <marker date="1526341743873" expanded="true" signature="45977:45986" ph="&lt;~&gt;" />
           </folding>
         </state>
       </provider>
@@ -381,14 +382,14 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="e#7658#7667#0" expanded="true" />
+            <element signature="e#7898#7907#0" expanded="true" />
             <element signature="method#isDirectory#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#stat#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#printStats#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#volume#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#getClusters#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#getFreelist#0;class#Fat32Reader#0" expanded="false" />
-            <marker date="1526337722946" expanded="true" signature="44128:44137" ph="&lt;~&gt;" />
+            <marker date="1526341743873" expanded="true" signature="45977:45986" ph="&lt;~&gt;" />
           </folding>
         </state>
       </provider>
@@ -414,14 +415,14 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="e#7658#7667#0" expanded="true" />
+            <element signature="e#7898#7907#0" expanded="true" />
             <element signature="method#isDirectory#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#stat#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#printStats#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#volume#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#getClusters#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#getFreelist#0;class#Fat32Reader#0" expanded="false" />
-            <marker date="1526337722946" expanded="true" signature="44128:44137" ph="&lt;~&gt;" />
+            <marker date="1526341743873" expanded="true" signature="45977:45986" ph="&lt;~&gt;" />
           </folding>
         </state>
       </provider>
@@ -442,9 +443,17 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/Fat32Reader/src/main/java/os/hw3/Directory.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="465">
+          <caret line="31" column="5" lean-forward="true" selection-start-line="31" selection-start-column="5" selection-end-line="31" selection-end-column="5" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/Fat32Reader/src/main/java/os/hw3/Boot.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="540">
+        <state relative-caret-position="374">
           <caret line="37" column="37" lean-forward="false" selection-start-line="37" selection-start-column="37" selection-end-line="37" selection-end-column="37" />
           <folding />
         </state>
@@ -452,26 +461,18 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Fat32Reader/src/main/java/os/hw3/Fat32Reader.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="106">
-          <caret line="197" column="0" lean-forward="true" selection-start-line="197" selection-start-column="0" selection-end-line="197" selection-end-column="0" />
+        <state relative-caret-position="318">
+          <caret line="292" column="29" lean-forward="true" selection-start-line="292" selection-start-column="29" selection-end-line="292" selection-end-column="29" />
           <folding>
-            <element signature="e#7658#7667#0" expanded="true" />
+            <element signature="e#7898#7907#0" expanded="true" />
             <element signature="method#isDirectory#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#stat#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#printStats#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#volume#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#getClusters#0;class#Fat32Reader#0" expanded="false" />
             <element signature="method#getFreelist#0;class#Fat32Reader#0" expanded="false" />
-            <marker date="1526337722946" expanded="true" signature="44128:44137" ph="&lt;~&gt;" />
+            <marker date="1526341743873" expanded="true" signature="45977:45986" ph="&lt;~&gt;" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Fat32Reader/src/main/java/os/hw3/Directory.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="315">
-          <caret line="21" column="12" lean-forward="false" selection-start-line="21" selection-start-column="8" selection-end-line="21" selection-end-column="12" />
-          <folding />
         </state>
       </provider>
     </entry>
