@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE log SYSTEM "logger.dtd">
 <log>
+<record>
+  <date>2018-05-14T22:53:18</date>
+  <millis>1526352798043</millis>
+  <sequence>0</sequence>
+  <logger>global</logger>
+  <level>WARNING</level>
+  <class>os.hw3.Fat32Reader</class>
+  <method>read</method>
+  <thread>1</thread>
+  <message>File yaakov.hag error: attempt to read beyond EoF.</message>
+</record>
 </log>
