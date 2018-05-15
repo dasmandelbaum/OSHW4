@@ -208,56 +208,62 @@ public class Fat32Reader {
             LOGGER.log(Level.WARNING, fileName + " is already present in directory and cannot be added again.");
             System.out.println("Error: cannot add file with existing name");
         }
-        //FIX THE ACTUAL FILE
-        //go to the clusters in the data region and add the file (make sure not to add too much to the last cluster)
-        //seek to first free cluster, then continue in next free if run out of room
-        ArrayList<Integer> clusters = new ArrayList<Integer>();
-        clusters = writeNewFileClusters(size, raf, clusters);
-        System.out.println("Clusters size: " + clusters.size());
-        writeToFat(raf, clusters, fat1Address);
-        writeToFat(raf, clusters, fat2Address);
+        else {
+            //FIX THE ACTUAL FILE
+            //go to the clusters in the data region and add the file (make sure not to add too much to the last cluster)
+            //seek to first free cluster, then continue in next free if run out of room
+            ArrayList<Integer> clusters = new ArrayList<Integer>();
+            clusters = writeNewFileClusters(size, raf, clusters);
+            System.out.println("Clusters size: " + clusters.size());
+            writeToFat(raf, clusters, fat1Address);
+            writeToFat(raf, clusters, fat2Address);
 
-        // FIX THE PARENT DIRECTORY
-        Directory newFile = new Directory();
-        newFile.name = fileName;
-        newFile.clusters = clusters;
-        newFile.nextClusterNumber = clusters.get(0);
-        newFile.parentDirectory = this.fs;
-        newFile.size = Integer.parseInt(size);
-        newFile.containsFiles = false;
-        newFile.attributes = "ATTR_ARCHIVE";
-        byte[] childEntry = getEntryForParent(newFile);
-        System.out.println("Got child entry");
-        //go through the parentDirectory in the data region and look for an open 32
-   		int start32 = parentDirectoryAdd(fileName, size, raf);
-        System.out.println("Start32: " + start32);
-   		//if there is no space then you have to add a new cluster
-   		if(start32 == -1)
-   		{
-   			//find the first available cluster
-   			int freeCluster = firstThreeFreecClusters[0];
-            //replace it with the next free cluster
-            resetFreeClusters(raf);
+            // FIX THE PARENT DIRECTORY
+            Directory newFile = new Directory();
+            newFile.name = fileName;
+            newFile.clusters = clusters;
+            newFile.nextClusterNumber = clusters.get(0);
+            newFile.parentDirectory = this.fs;
+            newFile.size = Integer.parseInt(size);
+            newFile.containsFiles = false;
+            newFile.attributes = "ATTR_ARCHIVE";
+            byte[] childEntry = getEntryForParent(newFile);
+            System.out.println("Got child entry");
+            //go through the parentDirectory in the data region and look for an open 32
+            int start32 = parentDirectoryAdd(fileName, size, raf);
+            System.out.println("Start32: " + start32);
+            //if there is no space then you have to add a new cluster
+            if (start32 == -1) {
+                //find the first available cluster
+                int freeCluster = firstThreeFreecClusters[0];
+                //replace it with the next free cluster
+                resetFreeClusters(raf);
 
-   			//go to that cluster in the data region and add new file with the given name in the first 32 bytes
-            int nextAddress = getAddress(this.boot.getRootDirAddress() + freeCluster - this.boot.getBPB_RootClus());
-            currentLocation = nextAddress;
+                //go to that cluster in the data region and add new file with the given name in the first 32 bytes
+                int nextAddress = getAddress(this.boot.getRootDirAddress() + freeCluster - this.boot.getBPB_RootClus());
+                currentLocation = nextAddress;
 
-            raf.seek(nextAddress);
-            raf.write(childEntry);
-   	        //update FAT (both) - this cluster will be FFFFFFFF and the previous last cluster will have the current last cluster
-            // int fat1Address = getAddress(getFATSecNum(1));
-   			fixFat(freeCluster, raf, fat1Address);
-            //int fat2Address = (((getAddress(this.boot.getRootDirAddress()) - fat1Address) / 2) + fat1Address);
-   			fixFat(freeCluster, raf, fat2Address);
-   		}
-   		else //if there is space in parent directory info cluster then add newFile line there
-        {
-            raf.seek(start32);//go back to beginning of open entry in parent
-            raf.write(childEntry);
-   		}
-        this.fs.files.add(newFile);
-   		//Arrays.this.fs.clusters.add(newFile.clusters);
+                raf.seek(nextAddress);
+                raf.write(childEntry);
+                for (int m = 0; m < this.boot.getBPB_BytesPerSec() - 32; m++) {
+                    byte b = (byte) 0x00;
+                    raf.write(b);
+                }
+                //update FAT (both) - this cluster will be FFFFFFFF and the previous last cluster will have the current last cluster
+                // int fat1Address = getAddress(getFATSecNum(1));
+                fixFat(freeCluster, raf, fat1Address);
+                //int fat2Address = (((getAddress(this.boot.getRootDirAddress()) - fat1Address) / 2) + fat1Address);
+                fixFat(freeCluster, raf, fat2Address);
+                this.fs.clusters.add(freeCluster);
+                //Arrays.sort(this.fs.clusters);
+            } else //if there is space in parent directory info cluster then add newFile line there
+            {
+                raf.seek(start32);//go back to beginning of open entry in parent
+                raf.write(childEntry);
+            }
+            this.fs.files.add(newFile);
+            //Arrays.this.fs.clusters.add(newFile.clusters);
+        }
     }
 
     private byte[] getEntryForParent(Directory newFile)
