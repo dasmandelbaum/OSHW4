@@ -80,7 +80,6 @@ public class Fat32Reader {
         Directory dir = new Directory();
         fr.parseCluster(raf, dir);//just for the root
 
-
         fr.fs = dir;//set to current directory
         fr.fs.parentDirectory = null;
         int n = fr.boot.getBPB_RootClus();//fr.fs.nextClusterNumber;
@@ -91,8 +90,9 @@ public class Fat32Reader {
         fr.parseDirectories(raf,fr.fs);
 
         fr.fs.nextClusterNumber = fr.boot.getBPB_RootClus();//added late
-        fr.fs.clusters.clear();
-        fr.fs.clusters.add(fr.boot.getBPB_RootClus());//added late
+        //fr.fs.clusters.clear();
+        fr.fs.clusters.remove(0);
+        fr.fs.clusters.add(0, fr.boot.getBPB_RootClus());//added late
 
         /*Get free cluster indices and count*/
 
@@ -157,7 +157,6 @@ public class Fat32Reader {
             
             else if(inputParts.length == 3 && command.equalsIgnoreCase("newfile")) 
             {
-            		System.out.println("newFile!!!");
             		fr.newFile(inputParts[1], inputParts[2], raf);
             }
         
@@ -208,13 +207,28 @@ public class Fat32Reader {
             LOGGER.log(Level.WARNING, fileName + " is already present in directory and cannot be added again.");
             System.out.println("Error: cannot add file with existing name");
         }
+        else if (fileName.length() > 12)
+        {
+            LOGGER.log(Level.WARNING, fileName + " is too long and cannot be added .");
+            System.out.println("Error: cannot add file longer than length 11 + .");
+        }
+        else if(fileName.startsWith("."))
+        {
+            LOGGER.log(Level.WARNING, fileName + " cannot start with '.'");
+            System.out.println("Error: cannot start with '.'");
+        }
+        else if(fileName.length() == 12 && fileName.indexOf(".") > 8)
+        {
+            LOGGER.log(Level.WARNING, fileName + " file name must be 8 char or fewer");
+            System.out.println("Error: file name must be 8 char or fewer");
+        }
         else {
             //FIX THE ACTUAL FILE
             //go to the clusters in the data region and add the file (make sure not to add too much to the last cluster)
             //seek to first free cluster, then continue in next free if run out of room
             ArrayList<Integer> clusters = new ArrayList<Integer>();
             clusters = writeNewFileClusters(size, raf, clusters);
-            System.out.println("Clusters size: " + clusters.size());
+            //System.out.println("Clusters size: " + clusters.size());
             writeToFat(raf, clusters, fat1Address);
             writeToFat(raf, clusters, fat2Address);
 
@@ -228,7 +242,7 @@ public class Fat32Reader {
             newFile.containsFiles = false;
             newFile.attributes = "ATTR_ARCHIVE";
             byte[] childEntry = getEntryForParent(newFile);
-            System.out.println("Got child entry");
+            //System.out.println("Got child entry");
             //go through the parentDirectory in the data region and look for an open 32
             int start32 = parentDirectoryAdd(fileName, size, raf);
             System.out.println("Start32: " + start32);
@@ -261,6 +275,7 @@ public class Fat32Reader {
                 raf.seek(start32);//go back to beginning of open entry in parent
                 raf.write(childEntry);
             }
+            newFile.name = newFile.name.toUpperCase();//anticipating upper case in directory entry
             this.fs.files.add(newFile);
             //Arrays.this.fs.clusters.add(newFile.clusters);
         }
@@ -279,16 +294,16 @@ public class Fat32Reader {
                 nameParts[1] += " ";
             }
         }
-        if(length < 11)
-        {
+        //if(length < 11)
+        //{
             nameForEntry = (nameParts[0].toUpperCase());
             for(int i = 0; i < 11 - length; i++)
             {
                 nameForEntry += " ";
             }
             nameForEntry += nameParts[1].toUpperCase();
-        }
-        System.out.println(nameForEntry);
+        //}
+        //System.out.println(nameForEntry);
         for(int i = 0; i < 11; i++)
         {
 //            char c = nameForEntry.charAt(i);
@@ -431,7 +446,7 @@ public class Fat32Reader {
             raf.seek(nextAddress);
             currentLocation = nextAddress;
             int nextClusterInFile = clusters.get(i + 1);
-            System.out.println("Need to write next cluster: " + nextClusterInFile + " at location " + nextAddress);
+            //System.out.println("Need to write next cluster: " + nextClusterInFile + " at location " + nextAddress);
             String bytes = Integer.toHexString(nextClusterInFile);
             while(bytes.length() < 8)
             {
@@ -526,9 +541,9 @@ public class Fat32Reader {
     public int getFirstFreeCluster(ArrayList<Integer> clusters, RandomAccessFile raf) throws IOException
     {
         int nextAddress = getAddress(this.boot.getRootDirAddress() + firstThreeFreecClusters[0] - this.boot.getBPB_RootClus());
-        System.out.println("Adding cluster " + firstThreeFreecClusters[0] + " to clusters");
+        //System.out.println("Adding cluster " + firstThreeFreecClusters[0] + " to clusters");
         clusters.add(firstThreeFreecClusters[0]);
-        System.out.println(nextAddress);
+        //System.out.println(nextAddress);
         //raf.seek(nextAddress);
 
         //replace it with the next free cluster
@@ -763,16 +778,23 @@ public class Fat32Reader {
     private void parseDirectories(RandomAccessFile raf, Directory dir) throws IOException
     {
         Directory newDir;
+
         //parse directory
         for(int j = 0; j < this.fs.clusters.size(); j++)//for each cluster in directory
         {
-            if(dir.parentDirectory != null) //not the root
+            if(dir.parentDirectory != null || dir.clusters.get(j) != 0) //not the root
             {
                 int clusterAddress = this.boot.getRootDirAddress() + dir.clusters.get(j) - this.boot.getBPB_RootClus();
                 clusterAddress = getAddress(clusterAddress);
                 raf.seek(clusterAddress);
                 this.currentLocation = clusterAddress;
                 //System.out.println("Parsing in Cluster address " + Integer.toHexString(clusterAddress) + " from cluster " + dir.clusters.get(j));//TEST
+            }
+            if(dir.clusters.get(j) == 2)//coming back to root after delete, start after volume name
+            {
+                int clusterAddress = getAddress(this.boot.getRootDirAddress()) + 32;
+                raf.seek(clusterAddress);
+                this.currentLocation = clusterAddress;
             }
             //parse cluster
             for (int i = 0; i < 16; i++)//parse each 32 bit potential entry
@@ -859,6 +881,12 @@ public class Fat32Reader {
             return false;
         }
         setAttribute(dir, byteString, temp);
+
+        if(dir.attributes.equalsIgnoreCase("ATTR_ARCHIVE") && !dir.name.contains("."))
+        {
+            dir.name = dir.name.substring(0, 8) + "." + dir.name.substring(8);
+            //System.out.println("new name with .: " + dir.name);
+        }
 
         byte[] DIR_FstClusHI = new byte[2];//High word of this entry’s first cluster number - 20 -> 22
         String hi = getValue(raf, DIR_FstClusHI, 8, 2);
