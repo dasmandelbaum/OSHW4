@@ -2,6 +2,8 @@ package os.hw3;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -272,6 +274,13 @@ public class Fat32Reader {
         String[] nameParts = newFile.name.split("\\.");
         String nameForEntry = "";
         int length = nameParts[0].length() + nameParts[1].length();
+        if(nameParts[1].length() < 3)//if file extension less than 3
+        {
+            for(int i = 0; i < 3 - nameParts[1].length(); i++)
+            {
+                nameParts[1] += " ";
+            }
+        }
         if(length < 11)
         {
             nameForEntry = (nameParts[0].toUpperCase());
@@ -286,10 +295,22 @@ public class Fat32Reader {
         {
             char c = nameForEntry.charAt(i);
             String charToWrite = Integer.toHexString(c);
-            System.out.println("About to write: " + charToWrite);
+            //System.out.println("About to write: " + charToWrite);
             byte b = (byte) Integer.parseInt(charToWrite, 16);
             entryToReturn[i] = b;
         }
+        entryToReturn[11] = (byte) 0x20;//adding a regular file attribute
+        entryToReturn[12] = (byte) 0x00;
+        System.out.println();
+        //DIR_CrtTimeTenth 13 - 14: Millisecond stamp at file creation time
+        //DIR_CrtTime 14 - 16: Time file was created.
+        //DIR_CrtDate 16 - 18: Date file was created.
+        //DIR_LstAccDate 18 - 20: Last access date.
+        //DIR_FstClusHI 20 - 22: High word of this entry’s first cluster number
+        //DIR_WrtTime 22 - 24: Time of last write.
+        //DIR_WrtDate 24 - 26: Date of last write.
+        //DIR_FstClusLO 26 - 28: Low word of this entry’s first cluster number.
+        //DIR_FileSize 28 - 32: 32-bit DWORD holding this file’s size in bytes.
         return entryToReturn;
     }
 
