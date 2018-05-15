@@ -34,13 +34,17 @@
  5. Start inputting commands and navigate, read and quit to your heart's content.
  
 ##	Notes
- 1. If type "cd ." in root, an error is returned because there is no directory named "."
-    in the root
+ 1. Assumptions:
+    a. Assuming file name before period must be 8 or fewer letters
+    b. Ignoring long names in directory entries
+    c. First open clusters from fs info sector is correct until shown otherwise 
  2. Will assume "/" is part of file name if typed with command, not relating to navigation
 
 ##	Challenges encountered along the way
  1. Balancing efficiency in navigation versus storage - we took an OO approach, which 
     simplified code and navigation efficiency, sacrificing on space.
+ 2. Because we did not know that HW4 would build on HW3, there are some repetitions in code
+    and not all methods are as optimized as they could be.
 
 ##	Sources you used to help you write your program
  1. logging help from: http://www.vogella.com/tutorials/Logging/article.html
