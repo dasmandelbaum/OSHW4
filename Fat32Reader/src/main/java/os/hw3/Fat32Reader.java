@@ -217,6 +217,11 @@ public class Fat32Reader {
         writeToFat(raf, clusters, fat1Address);
         writeToFat(raf, clusters, fat2Address);
 
+
+
+        //TODO: ADD TO PARENT
+        // FIX THE PARENT DIRECTORY
+        //TODO: create a new file with the given name
         Directory newFile = new Directory();
         newFile.name = fileName;
         newFile.clusters = clusters;
@@ -226,10 +231,6 @@ public class Fat32Reader {
         newFile.containsFiles = false;
         newFile.attributes = "ATTR_ARCHIVE";
         byte[] childEntry = getEntryForParent(newFile);
-
-        //TODO: ADD TO PARENT
-        // FIX THE PARENT DIRECTORY
-        //TODO: create a new file with the given name
 
         //go through the parentDirectory in the data region and look for an open 32
    		int start32 = parentDirectoryAdd(fileName, size, raf);
@@ -293,26 +294,76 @@ public class Fat32Reader {
         System.out.println(nameForEntry);
         for(int i = 0; i < 11; i++)
         {
-            char c = nameForEntry.charAt(i);
-            String charToWrite = Integer.toHexString(c);
-            //System.out.println("About to write: " + charToWrite);
-            byte b = (byte) Integer.parseInt(charToWrite, 16);
-            entryToReturn[i] = b;
+//            char c = nameForEntry.charAt(i);
+//            String charToWrite = Integer.toHexString(c);
+//            //System.out.println("About to write: " + charToWrite);
+//            byte b = (byte) Integer.parseInt(charToWrite, 16);
+            entryToReturn[i] = getByteFromString(nameForEntry, i);
         }
         entryToReturn[11] = (byte) 0x20;//adding a regular file attribute
         entryToReturn[12] = (byte) 0x00;
-        System.out.println();
-        //DIR_CrtTimeTenth 13 - 14: Millisecond stamp at file creation time
+        //System.out.println(System.currentTimeMillis());
+        //DIR_CrtTimeTenth 13 - 14: Millisecond stamp at file creation time.
+        entryToReturn[13] = (byte) 0x00;//Integer.parseInt(System.currentTimeMillis(), 16);
         //DIR_CrtTime 14 - 16: Time file was created.
+        entryToReturn[14] = (byte) 0x00;
+        entryToReturn[15] = (byte) 0x00;
         //DIR_CrtDate 16 - 18: Date file was created.
+        entryToReturn[16] = (byte) 0x00;
+        entryToReturn[17] = (byte) 0x00;
         //DIR_LstAccDate 18 - 20: Last access date.
-        //DIR_FstClusHI 20 - 22: High word of this entry’s first cluster number
+        entryToReturn[18] = (byte) 0x00;
+        entryToReturn[19] = (byte) 0x00;
+        //DIR_FstClusHI 20 - 22: High word of this entry’s first cluster number. <--Little endian
+        int clusterNumber = newFile.nextClusterNumber;
+        String clusterInHex = Integer.toHexString(clusterNumber);
+        while(clusterInHex.length() < 8)
+        {
+            clusterInHex = "0" + clusterInHex;
+        }
+        System.out.println("Cluster in hex: " + clusterInHex);
+        String hi1 = clusterInHex.substring(2,4);
+        String hi2 = clusterInHex.substring(0,2);
+        String lo1 = clusterInHex.substring(6);
+        String lo2 = clusterInHex.substring(4,6);
+        entryToReturn[20] = (byte) Integer.parseInt(hi1, 16);
+        entryToReturn[21] = (byte) (byte) Integer.parseInt(hi2, 16);
         //DIR_WrtTime 22 - 24: Time of last write.
+        entryToReturn[22] = (byte) 0x00;
+        entryToReturn[23] = (byte) 0x00;
         //DIR_WrtDate 24 - 26: Date of last write.
-        //DIR_FstClusLO 26 - 28: Low word of this entry’s first cluster number.
-        //DIR_FileSize 28 - 32: 32-bit DWORD holding this file’s size in bytes.
+        entryToReturn[24] = (byte) 0x00;
+        entryToReturn[25] = (byte) 0x00;
+        //DIR_FstClusLO 26 - 28: Low word of this entry’s first cluster number. <--Little endian
+        entryToReturn[26] = (byte) Integer.parseInt(lo1, 16);
+        entryToReturn[27] =  (byte) Integer.parseInt(lo2, 16);
+        //DIR_FileSize 28 - 32: 32-bit WORD holding this file’s size in bytes. <--Little endian
+        String sizeInHex = Integer.toHexString(newFile.size);
+        while(sizeInHex.length() < 8)
+        {
+            sizeInHex = "0" + sizeInHex;
+        }
+//        String size1 = clusterInHex.substring(2,4);
+//        String size2 = clusterInHex.substring(0,2);
+//        String size3 = clusterInHex.substring(6);
+//        String size4 = clusterInHex.substring(4,6);
+        int j = sizeInHex.length();
+        for(int i = 28; i < 32; i++)
+        {
+            entryToReturn[i] =  (byte) Integer.parseInt(sizeInHex.substring(j - 2, j), 16);
+            j -= 2;
+        }
         return entryToReturn;
     }
+
+    private byte getByteFromString(String nameForEntry, int i)
+    {
+        char c = nameForEntry.charAt(i);
+        String charToWrite = Integer.toHexString(c);
+        //System.out.println("About to write: " + charToWrite);
+        return (byte) Integer.parseInt(charToWrite, 16);
+    }
+
 
     private boolean hasFile(String newName)
     {
