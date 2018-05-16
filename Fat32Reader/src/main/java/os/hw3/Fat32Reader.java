@@ -2,6 +2,7 @@ package os.hw3;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -222,6 +223,11 @@ public class Fat32Reader {
             LOGGER.log(Level.WARNING, fileName + " file name must be 8 char or fewer");
             System.out.println("Error: file name must be 8 char or fewer");
         }
+        else if(!fileName.contains("."))
+        {
+            LOGGER.log(Level.WARNING, fileName + " can only create file with '.' and extension");
+            System.out.println("Error: can only create file with '.' and extension");
+        }
         else {
             //FIX THE ACTUAL FILE
             //go to the clusters in the data region and add the file (make sure not to add too much to the last cluster)
@@ -245,7 +251,7 @@ public class Fat32Reader {
             //System.out.println("Got child entry");
             //go through the parentDirectory in the data region and look for an open 32
             int start32 = parentDirectoryAdd(fileName, size, raf);
-            System.out.println("Start32: " + start32);
+            //System.out.println("Start32: " + start32);
             //if there is no space then you have to add a new cluster
             if (start32 == -1) {
                 //find the first available cluster
@@ -264,12 +270,9 @@ public class Fat32Reader {
                     raf.write(b);
                 }
                 //update FAT (both) - this cluster will be FFFFFFFF and the previous last cluster will have the current last cluster
-                // int fat1Address = getAddress(getFATSecNum(1));
                 fixFat(freeCluster, raf, fat1Address);
-                //int fat2Address = (((getAddress(this.boot.getRootDirAddress()) - fat1Address) / 2) + fat1Address);
                 fixFat(freeCluster, raf, fat2Address);
                 this.fs.clusters.add(freeCluster);
-                //Arrays.sort(this.fs.clusters);
             } else //if there is space in parent directory info cluster then add newFile line there
             {
                 raf.seek(start32);//go back to beginning of open entry in parent
@@ -277,7 +280,6 @@ public class Fat32Reader {
             }
             newFile.name = newFile.name.toUpperCase();//anticipating upper case in directory entry
             this.fs.files.add(newFile);
-            //Arrays.this.fs.clusters.add(newFile.clusters);
         }
     }
 
@@ -294,38 +296,73 @@ public class Fat32Reader {
                 nameParts[1] += " ";
             }
         }
-        //if(length < 11)
-        //{
-            nameForEntry = (nameParts[0].toUpperCase());
-            for(int i = 0; i < 11 - length; i++)
-            {
-                nameForEntry += " ";
-            }
-            nameForEntry += nameParts[1].toUpperCase();
-        //}
-        //System.out.println(nameForEntry);
+        nameForEntry = (nameParts[0].toUpperCase());
+        for(int i = 0; i < 11 - length; i++)
+        {
+            nameForEntry += " ";
+        }
+        nameForEntry += nameParts[1].toUpperCase();
         for(int i = 0; i < 11; i++)
         {
-//            char c = nameForEntry.charAt(i);
-//            String charToWrite = Integer.toHexString(c);
-//            //System.out.println("About to write: " + charToWrite);
-//            byte b = (byte) Integer.parseInt(charToWrite, 16);
             entryToReturn[i] = getByteFromString(nameForEntry, i);
         }
         entryToReturn[11] = (byte) 0x20;//adding a regular file attribute
         entryToReturn[12] = (byte) 0x00;
-        //System.out.println(System.currentTimeMillis());
+        String timestamp = Instant.now().toString();
+//        System.out.println(timestamp);
+        String year = timestamp.substring(0, 4);
+        int yearInt = Integer.parseInt(year) - 1980;
+//        System.out.println(yearInt);
+        String month = timestamp.substring(5, 7);
+        int monthInt = Integer.parseInt(month);
+//        System.out.println(monthInt);
+        String day = timestamp.substring(8, 10);
+        int dayInt = Integer.parseInt(day);
+//        System.out.println(dayInt);
+        String hour = timestamp.substring(11, 13);
+        int hourInt = Integer.parseInt(hour);
+//        System.out.println(hourInt);
+        String minutes = timestamp.substring(14, 16);
+        int minutesInt = Integer.parseInt(minutes);
+//        System.out.println(minutesInt);
+        String seconds =  timestamp.substring(17, 19);
+        int secondsInt = Integer.parseInt(seconds);
+//        System.out.println(secondsInt);
+
+        int dateFinal = dayInt + (monthInt << 5) + (yearInt << 9);
+        int timeFinal = (secondsInt >> 1) + (minutesInt << 5) + (hourInt << 11);
+//        System.out.println(dateFinal);
+//        System.out.println(timeFinal);
+
+        String hexDate = Integer.toHexString(dateFinal);
+        String date1 = hexDate.substring(2);
+        String date2 = hexDate.substring(0,2);
+        String hexTime = Integer.toHexString(timeFinal);
+        String time1 = hexTime.substring(2);
+        String time2 = hexTime.substring(0,2);
+
+        while(hexDate.length() < 4)
+        {
+            hexDate = "0" + hexDate;
+        }
+        while(hexTime.length() < 4)
+        {
+            hexTime = "0" + hexTime;
+        }
+//        System.out.println(hexDate);
+//        System.out.println(hexTime);
+
         //DIR_CrtTimeTenth 13 - 14: Millisecond stamp at file creation time.
         entryToReturn[13] = (byte) 0x00;//Integer.parseInt(System.currentTimeMillis(), 16);
         //DIR_CrtTime 14 - 16: Time file was created.
-        entryToReturn[14] = (byte) 0x00;
-        entryToReturn[15] = (byte) 0x00;
+        entryToReturn[14] = (byte) Integer.parseInt(time1, 16);
+        entryToReturn[15] = (byte) Integer.parseInt(time2, 16);
         //DIR_CrtDate 16 - 18: Date file was created.
-        entryToReturn[16] = (byte) 0x00;
-        entryToReturn[17] = (byte) 0x00;
+        entryToReturn[16] = (byte) Integer.parseInt(date1, 16);
+        entryToReturn[17] = (byte) Integer.parseInt(date2, 16);
         //DIR_LstAccDate 18 - 20: Last access date.
-        entryToReturn[18] = (byte) 0x00;
-        entryToReturn[19] = (byte) 0x00;
+        entryToReturn[18] = (byte) Integer.parseInt(date1, 16);
+        entryToReturn[19] = (byte) Integer.parseInt(date2, 16);;
         //DIR_FstClusHI 20 - 22: High word of this entry’s first cluster number. <--Little endian
         int clusterNumber = newFile.nextClusterNumber;
         String clusterInHex = Integer.toHexString(clusterNumber);
@@ -341,11 +378,11 @@ public class Fat32Reader {
         entryToReturn[20] = (byte) Integer.parseInt(hi1, 16);
         entryToReturn[21] = (byte) (byte) Integer.parseInt(hi2, 16);
         //DIR_WrtTime 22 - 24: Time of last write.
-        entryToReturn[22] = (byte) 0x00;
-        entryToReturn[23] = (byte) 0x00;
+        entryToReturn[22] = (byte) Integer.parseInt(time1, 16);
+        entryToReturn[23] = (byte) Integer.parseInt(time2, 16);
         //DIR_WrtDate 24 - 26: Date of last write.
-        entryToReturn[24] = (byte) 0x00;
-        entryToReturn[25] = (byte) 0x00;
+        entryToReturn[24] = (byte) Integer.parseInt(date1, 16);
+        entryToReturn[25] = (byte) Integer.parseInt(date2, 16);
         //DIR_FstClusLO 26 - 28: Low word of this entry’s first cluster number. <--Little endian
         entryToReturn[26] = (byte) Integer.parseInt(lo1, 16);
         entryToReturn[27] =  (byte) Integer.parseInt(lo2, 16);
