@@ -1,6 +1,10 @@
 package os.hw3;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -16,12 +20,16 @@ import java.util.logging.Logger;
 public class Fat32Reader {
 
     private final static Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+    private Directory fs;
     FileHandler fh;
     private String header;
     Boot boot;
-    private Directory fs;//represents current directory
     private String volumeName;
     int currentLocation;
+    private int[] firstThreeFreecClusters;
+    private int numFreeClusters;
+    private int fat1Address;
+    private int fat2Address;
 
     public String getHeader() {
         return header;
@@ -40,6 +48,8 @@ public class Fat32Reader {
         setHeader("/");
         fs = new Directory();
         currentLocation = 0;
+        firstThreeFreecClusters = new int[3];
+        numFreeClusters = 0;
     }
 
     /**
@@ -55,10 +65,11 @@ public class Fat32Reader {
         File file = new File(args[0]);
         //System.out.println("File exists: " + file.exists());//TEST
         //System.out.println("Fat32 file path: " + file.getAbsolutePath());//TEST
-        RandomAccessFile raf = new RandomAccessFile(file, "r");
+        RandomAccessFile raf = new RandomAccessFile(file, "rw");
         /* Parse boot sector and get information */
         fr.boot = new Boot(raf, fr);
-
+        fr.fat1Address = fr.getAddress(fr.getFATSecNum(1));
+        fr.fat2Address = (((fr.getAddress(fr.boot.getRootDirAddress()) - fr.fat1Address) / 2) + fr.fat1Address);//added late
         /* Get root directory address */
         int startOfRootDirectory = fr.getAddress(fr.boot.getRootDirAddress());
         //System.out.println("rootDirAddress is 0x" + Integer.toHexString(fr.boot.getRootDirAddress()) + ", " + fr.boot.getRootDirAddress());//TEST
@@ -73,11 +84,41 @@ public class Fat32Reader {
         fr.fs = dir;//set to current directory
         fr.fs.parentDirectory = null;
         int n = fr.boot.getBPB_RootClus();//fr.fs.nextClusterNumber;
+
         //System.out.println("Root clus: " + n);//TEST
         fr.fs.clusters = fr.getClusters(raf, fr.getFATSecNum(n), fr.getFATEntOffset(n), fr.fs.nextClusterNumber);
+        raf.seek(startOfRootDirectory + 32);
         fr.parseDirectories(raf,fr.fs);
 
-        
+        fr.fs.nextClusterNumber = fr.boot.getBPB_RootClus();//added late
+        //fr.fs.clusters.clear();
+        fr.fs.clusters.remove(0);
+        fr.fs.clusters.add(0, fr.boot.getBPB_RootClus());//added late
+
+        /*Get free cluster indices and count*/
+
+        //go to BPB_FSInfo location - FSINFO sector
+        fr.currentLocation = fr.getAddress(fr.boot.getBPB_FSInfo());
+
+        //get number of free clusters
+        byte[] FSI_Free_Count = new byte[4];
+        fr.numFreeClusters = Integer.parseInt(fr.getValue(raf, FSI_Free_Count, 488, 4), 16);
+        //System.out.println(fr.numFreeClusters);
+
+        //get first three free cluster numbers
+        byte[] FSI_Nxt_Free = new byte[4];
+        int firstFree = Integer.parseInt(fr.getValue(raf, FSI_Nxt_Free, 492, 4), 16);
+       // System.out.println("this is the first free cluster: " + firstFree);
+        fr.firstThreeFreecClusters[0] = firstFree;
+        int secondFree = fr.getNextFreeCluster(raf, firstFree);
+       // System.out.println("this is the second free cluster: " + secondFree);
+        fr.firstThreeFreecClusters[1] = secondFree;
+        int thirdFree = fr.getNextFreeCluster(raf, secondFree);
+        fr.firstThreeFreecClusters[2] = thirdFree;
+        //System.out.println(fr.firstThreeFreecClusters[0]);
+        //System.out.println(fr.firstThreeFreecClusters[1]);
+        //System.out.println(fr.firstThreeFreecClusters[2]);
+
         /* Main loop.  You probably want to create a helper function for each command besides quit. */
         Scanner s = new Scanner(System.in);
         String input;
@@ -104,11 +145,22 @@ public class Fat32Reader {
                 {
                     fr.stat(fName, raf);
                 }
+                else if(command.equalsIgnoreCase("delete"))
+                {
+                    fr.delete(fName, raf);
+                }
+                
                 else
                 {
                     System.out.println("Unrecognized command.");
                 }
             }
+            
+            else if(inputParts.length == 3 && command.equalsIgnoreCase("newfile")) 
+            {
+            		fr.newFile(inputParts[1], inputParts[2], raf);
+            }
+        
             else if(inputParts.length == 4 && command.equalsIgnoreCase("read"))
             {
                 fr.read(raf, inputParts[1], inputParts[2], inputParts[3]);
@@ -127,6 +179,10 @@ public class Fat32Reader {
                 {
                     break;
                 }
+                else if(command.equalsIgnoreCase("freelist"))
+                {
+                    fr.getFreelist();
+                }
                 else
                 {
                     System.out.println("Unrecognized command.");
@@ -143,6 +199,601 @@ public class Fat32Reader {
         raf.close();
 
         /* Success */
+    }
+    
+    private void newFile(String fileName, String size, RandomAccessFile raf) throws IOException 
+    {
+        if(hasFile(fileName))
+        {
+            LOGGER.log(Level.WARNING, fileName + " is already present in directory and cannot be added again.");
+            System.out.println("Error: cannot add file with existing name");
+        }
+        else if (fileName.length() > 12)
+        {
+            LOGGER.log(Level.WARNING, fileName + " is too long and cannot be added .");
+            System.out.println("Error: cannot add file longer than length 11 + .");
+        }
+        else if(fileName.startsWith("."))
+        {
+            LOGGER.log(Level.WARNING, fileName + " cannot start with '.'");
+            System.out.println("Error: cannot start with '.'");
+        }
+        else if(fileName.length() == 12 && fileName.indexOf(".") > 8)
+        {
+            LOGGER.log(Level.WARNING, fileName + " file name must be 8 char or fewer");
+            System.out.println("Error: file name must be 8 char or fewer");
+        }
+        else if(!fileName.contains("."))
+        {
+            LOGGER.log(Level.WARNING, fileName + " can only create file with '.' and extension");
+            System.out.println("Error: can only create file with '.' and extension");
+        }
+        else {
+            //FIX THE ACTUAL FILE
+            //go to the clusters in the data region and add the file (make sure not to add too much to the last cluster)
+            //seek to first free cluster, then continue in next free if run out of room
+            ArrayList<Integer> clusters = new ArrayList<Integer>();
+            clusters = writeNewFileClusters(size, raf, clusters);
+            //System.out.println("Clusters size: " + clusters.size());
+            writeToFat(raf, clusters, fat1Address);
+            writeToFat(raf, clusters, fat2Address);
+
+            // FIX THE PARENT DIRECTORY
+            Directory newFile = new Directory();
+            newFile.name = fileName;
+            newFile.clusters = clusters;
+            newFile.nextClusterNumber = clusters.get(0);
+            newFile.parentDirectory = this.fs;
+            newFile.size = Integer.parseInt(size);
+            newFile.containsFiles = false;
+            newFile.attributes = "ATTR_ARCHIVE";
+            byte[] childEntry = getEntryForParent(newFile);
+            //System.out.println("Got child entry");
+            //go through the parentDirectory in the data region and look for an open 32
+            int start32 = parentDirectoryAdd(fileName, size, raf);
+            //System.out.println("Start32: " + start32);
+            //if there is no space then you have to add a new cluster
+            if (start32 == -1) {
+                //find the first available cluster
+                int freeCluster = firstThreeFreecClusters[0];
+                //replace it with the next free cluster
+                resetFreeClusters(raf);
+
+                //go to that cluster in the data region and add new file with the given name in the first 32 bytes
+                int nextAddress = getAddress(this.boot.getRootDirAddress() + freeCluster - this.boot.getBPB_RootClus());
+                currentLocation = nextAddress;
+
+                raf.seek(nextAddress);
+                raf.write(childEntry);
+                for (int m = 0; m < this.boot.getBPB_BytesPerSec() - 32; m++) {
+                    byte b = (byte) 0x00;
+                    raf.write(b);
+                }
+                //update FAT (both) - this cluster will be FFFFFFFF and the previous last cluster will have the current last cluster
+                fixFat(freeCluster, raf, fat1Address);
+                fixFat(freeCluster, raf, fat2Address);
+                this.fs.clusters.add(freeCluster);
+            } else //if there is space in parent directory info cluster then add newFile line there
+            {
+                raf.seek(start32);//go back to beginning of open entry in parent
+                raf.write(childEntry);
+            }
+            newFile.name = newFile.name.toUpperCase();//anticipating upper case in directory entry
+            this.fs.files.add(newFile);
+        }
+    }
+
+    private byte[] getEntryForParent(Directory newFile)
+    {
+        byte[] entryToReturn = new byte[32];
+        String[] nameParts = newFile.name.split("\\.");
+        String nameForEntry = "";
+        int length = nameParts[0].length() + nameParts[1].length();
+        if(nameParts[1].length() < 3)//if file extension less than 3
+        {
+            for(int i = 0; i < 3 - nameParts[1].length(); i++)
+            {
+                nameParts[1] += " ";
+            }
+        }
+        nameForEntry = (nameParts[0].toUpperCase());
+        for(int i = 0; i < 11 - length; i++)
+        {
+            nameForEntry += " ";
+        }
+        nameForEntry += nameParts[1].toUpperCase();
+        for(int i = 0; i < 11; i++)
+        {
+            entryToReturn[i] = getByteFromString(nameForEntry, i);
+        }
+        entryToReturn[11] = (byte) 0x20;//adding a regular file attribute
+        entryToReturn[12] = (byte) 0x00;
+        String timestamp = Instant.now().toString();
+//        System.out.println(timestamp);
+        String year = timestamp.substring(0, 4);
+        int yearInt = Integer.parseInt(year) - 1980;
+//        System.out.println(yearInt);
+        String month = timestamp.substring(5, 7);
+        int monthInt = Integer.parseInt(month);
+//        System.out.println(monthInt);
+        String day = timestamp.substring(8, 10);
+        int dayInt = Integer.parseInt(day);
+//        System.out.println(dayInt);
+        String hour = timestamp.substring(11, 13);
+        int hourInt = Integer.parseInt(hour);
+//        System.out.println(hourInt);
+        String minutes = timestamp.substring(14, 16);
+        int minutesInt = Integer.parseInt(minutes);
+//        System.out.println(minutesInt);
+        String seconds =  timestamp.substring(17, 19);
+        int secondsInt = Integer.parseInt(seconds);
+//        System.out.println(secondsInt);
+
+        int dateFinal = dayInt + (monthInt << 5) + (yearInt << 9);
+        int timeFinal = (secondsInt >> 1) + (minutesInt << 5) + (hourInt << 11);
+//        System.out.println(dateFinal);
+//        System.out.println(timeFinal);
+
+        String hexDate = Integer.toHexString(dateFinal);
+        String date1 = hexDate.substring(2);
+        String date2 = hexDate.substring(0,2);
+        String hexTime = Integer.toHexString(timeFinal);
+        String time1 = hexTime.substring(2);
+        String time2 = hexTime.substring(0,2);
+
+        while(hexDate.length() < 4)
+        {
+            hexDate = "0" + hexDate;
+        }
+        while(hexTime.length() < 4)
+        {
+            hexTime = "0" + hexTime;
+        }
+//        System.out.println(hexDate);
+//        System.out.println(hexTime);
+
+        //DIR_CrtTimeTenth 13 - 14: Millisecond stamp at file creation time.
+        entryToReturn[13] = (byte) 0x00;//Integer.parseInt(System.currentTimeMillis(), 16);
+        //DIR_CrtTime 14 - 16: Time file was created.
+        entryToReturn[14] = (byte) Integer.parseInt(time1, 16);
+        entryToReturn[15] = (byte) Integer.parseInt(time2, 16);
+        //DIR_CrtDate 16 - 18: Date file was created.
+        entryToReturn[16] = (byte) Integer.parseInt(date1, 16);
+        entryToReturn[17] = (byte) Integer.parseInt(date2, 16);
+        //DIR_LstAccDate 18 - 20: Last access date.
+        entryToReturn[18] = (byte) Integer.parseInt(date1, 16);
+        entryToReturn[19] = (byte) Integer.parseInt(date2, 16);;
+        //DIR_FstClusHI 20 - 22: High word of this entry’s first cluster number. <--Little endian
+        int clusterNumber = newFile.nextClusterNumber;
+        String clusterInHex = Integer.toHexString(clusterNumber);
+        while(clusterInHex.length() < 8)
+        {
+            clusterInHex = "0" + clusterInHex;
+        }
+        //System.out.println("Cluster in hex: " + clusterInHex);
+        String hi1 = clusterInHex.substring(2,4);
+        String hi2 = clusterInHex.substring(0,2);
+        String lo1 = clusterInHex.substring(6);
+        String lo2 = clusterInHex.substring(4,6);
+        entryToReturn[20] = (byte) Integer.parseInt(hi1, 16);
+        entryToReturn[21] = (byte) (byte) Integer.parseInt(hi2, 16);
+        //DIR_WrtTime 22 - 24: Time of last write.
+        entryToReturn[22] = (byte) Integer.parseInt(time1, 16);
+        entryToReturn[23] = (byte) Integer.parseInt(time2, 16);
+        //DIR_WrtDate 24 - 26: Date of last write.
+        entryToReturn[24] = (byte) Integer.parseInt(date1, 16);
+        entryToReturn[25] = (byte) Integer.parseInt(date2, 16);
+        //DIR_FstClusLO 26 - 28: Low word of this entry’s first cluster number. <--Little endian
+        entryToReturn[26] = (byte) Integer.parseInt(lo1, 16);
+        entryToReturn[27] =  (byte) Integer.parseInt(lo2, 16);
+        //DIR_FileSize 28 - 32: 32-bit WORD holding this file’s size in bytes. <--Little endian
+        String sizeInHex = Integer.toHexString(newFile.size);
+        while(sizeInHex.length() < 8)
+        {
+            sizeInHex = "0" + sizeInHex;
+        }
+        int j = sizeInHex.length();
+        for(int i = 28; i < 32; i++)
+        {
+            entryToReturn[i] =  (byte) Integer.parseInt(sizeInHex.substring(j - 2, j), 16);
+            j -= 2;
+        }
+        return entryToReturn;
+    }
+
+    private byte getByteFromString(String nameForEntry, int i)
+    {
+        char c = nameForEntry.charAt(i);
+        String charToWrite = Integer.toHexString(c);
+        //System.out.println("About to write: " + charToWrite);
+        return (byte) Integer.parseInt(charToWrite, 16);
+    }
+
+
+    private boolean hasFile(String newName)
+    {
+        for(Directory d: this.fs.files)
+        {
+            if(d.name.equalsIgnoreCase(newName))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void resetFreeClusters(RandomAccessFile raf) throws IOException
+    {
+        int nextFree = getNextFreeCluster(raf, firstThreeFreecClusters[2]);
+        firstThreeFreecClusters[0] = nextFree;
+        Arrays.sort(firstThreeFreecClusters);
+        numFreeClusters--;
+        updateFatSector(raf);
+    }
+
+    private ArrayList<Integer> writeNewFileClusters(String size, RandomAccessFile raf, ArrayList<Integer> clusters) throws IOException
+    {
+        int nextAddress = getFirstFreeCluster(clusters, raf);
+
+        raf.seek(nextAddress);
+        currentLocation = nextAddress;
+        int totalToWrite = Integer.parseInt(size);
+        //System.out.println("size to write: " + totalToWrite);
+        String toWrite = "New File.\r\n";
+        int count = 0;
+        int j = 0;
+        for (int i = 0; i < totalToWrite; i++)//toWrite.length())
+        {
+            char c = toWrite.charAt(j);
+            String charToWrite = Integer.toHexString(c);
+            //System.out.println("About to write: " + charToWrite);
+            byte b = (byte) Integer.parseInt(charToWrite, 16);
+            raf.write(b);
+            count++;
+            currentLocation++;
+            j = (j + 1) % toWrite.length();
+
+            //System.out.println("count: " + count + "...i: " + i + "...j: " + j);
+            if(count >= this.boot.getBPB_BytesPerSec())
+            {
+                raf.seek(getFirstFreeCluster(clusters, raf));
+                count = 0;
+            }
+            //System.out.println("writing at " + currentLocation);
+        }
+        if(count < this.boot.getBPB_BytesPerSec())//need to overwrite the rest of old file
+        {
+            for(int m = count; m < this.boot.getBPB_BytesPerSec(); m++)
+            {
+                byte b = (byte) 0x00;
+                raf.write(b);
+            }
+        }
+        return clusters;
+    }
+
+    private void writeToFat(RandomAccessFile raf, ArrayList<Integer> clusters, int fatAddress) throws IOException
+    {
+        //go to each cluster in each fat and set them to the next cluster (FFFFFFFF for the last cluster)
+        for(int i = 0; i < clusters.size() - 1; i++)// cluster: clusters)
+        {
+            int cluster = clusters.get(i);
+            int nextAddress = fatAddress + getFATEntOffset(cluster);
+            //write address of next cluster
+            raf.seek(nextAddress);
+            currentLocation = nextAddress;
+            int nextClusterInFile = clusters.get(i + 1);
+            //System.out.println("Need to write next cluster: " + nextClusterInFile + " at location " + nextAddress);
+            String bytes = Integer.toHexString(nextClusterInFile);
+            while(bytes.length() < 8)
+            {
+                bytes = "0".concat(bytes);
+            }
+            System.out.println("Bytes: " + bytes);
+            for(int m = 8; m > 1; m = m - 2)
+            {
+                byte b = (byte) Integer.parseInt(bytes.substring(m - 2, m), 16);
+                raf.write(b);
+            }
+        }
+        int cluster = clusters.get(clusters.size() - 1);
+        int nextAddress = fatAddress + getFATEntOffset(cluster);
+        raf.seek(nextAddress);
+        //change value from 00000000 to FFFFFFFF
+        for(int i = 0; i < 4; i++)
+        {
+            byte b = (byte) 0xFF;
+            raf.write(b);
+        }
+    }
+
+    //update FAT (both)- this cluster will be FFFFFFFF and the previous last cluster will be the current last cluster
+    private void fixFat(int freeCluster, RandomAccessFile raf, int location) throws IOException 
+    {
+		//previous last cluster
+		int previousLastCluster = this.fs.clusters.get(this.fs.clusters.size()-1);
+
+		//Change the next cluster number to hex and replace FFFFFFFF and add zeros is necessary 
+		String bytes = Integer.toHexString(freeCluster);
+        while(bytes.length() < 8)
+        {
+            bytes = "0".concat(bytes);
+        }
+        
+        //Go to location of last cluster in fat and replace it with next cluster number in hex
+        int clusterEntryAddress = location + getFATEntOffset(previousLastCluster);
+        raf.seek(clusterEntryAddress);
+
+        for(int i = 8; i > 1; i = i - 2)
+        {
+            byte b = (byte) Integer.parseInt(bytes.substring(i - 2, i), 16);            
+            raf.write(b);
+            //System.out.println("FSI FREE COUNT " + b);//TEST
+        }
+		//current last cluster
+        //Go to location of the current last cluster
+        raf.seek(location + getFATEntOffset(freeCluster));
+        
+        //change value from 00000000 to FFFFFFFF
+	    for(int i = 0; i < 4; i++)
+	    {
+            byte b = (byte) 0xFF;
+            raf.write(b);
+	    }    	
+    }
+    
+    //returns the beginning of the 32 byte space that we will be adding to
+    private int parentDirectoryAdd(String fileName, String size, RandomAccessFile raf) throws IOException 
+    {
+        for(int cluster: this.fs.clusters)
+        {
+             //System.out.println("Cluster number: " + cluster);
+             int nextAddress = getAddress(this.boot.getRootDirAddress() + cluster - this.boot.getBPB_RootClus());
+             currentLocation = nextAddress;
+             //System.out.println("Address: " + nextAddress);
+             raf.seek(nextAddress);
+             //search for file name in cluster
+             for (int i = 0; i < 16; i++)//parse each 32 bit potential entry
+             {
+                 //System.out.println(currentLocation);
+                 byte firstByte = raf.readByte();
+                 //System.out.println("This is my current location: " + currentLocation);
+                 this.currentLocation += 1;
+                 //System.out.println("this is the first byte: " + firstByte);//TEST
+                 if(firstByte == -27 || firstByte == 0)//found open space in parent
+                 {
+                     currentLocation -= 1;
+                     return currentLocation;
+                 }
+                 else
+                 {
+                     raf.seek(currentLocation + 31);//try next one
+                     currentLocation += 31;
+                 }
+             }
+        }
+         return -1;
+     }
+
+    public int getFirstFreeCluster(ArrayList<Integer> clusters, RandomAccessFile raf) throws IOException
+    {
+        int nextAddress = getAddress(this.boot.getRootDirAddress() + firstThreeFreecClusters[0] - this.boot.getBPB_RootClus());
+        //System.out.println("Adding cluster " + firstThreeFreecClusters[0] + " to clusters");
+        clusters.add(firstThreeFreecClusters[0]);
+        //System.out.println(nextAddress);
+        //raf.seek(nextAddress);
+
+        //replace it with the next free cluster
+        resetFreeClusters(raf);
+        return nextAddress;
+    }
+
+    private void delete(String fName, RandomAccessFile raf) throws IOException
+    {
+        boolean marked = false;
+        //mark file as deleted in current directory
+        for(Directory dir: this.fs.files)
+        {
+            if (dir.name.equalsIgnoreCase(fName) && dir.containsFiles == false)//dealing with file not directory
+            {
+                marked = markDirectoryEntries(raf, this.fs.clusters, dir.name);
+                //int fat1Address = getAddress(getFATSecNum(1));
+                //System.out.println(fat1Address);//TEST
+                updateFat(raf, fat1Address, dir.nextClusterNumber, 1);
+                //int fat2Address = (((getAddress(this.boot.getRootDirAddress()) - fat1Address) / 2) + fat1Address);
+                //System.out.println(fat2Address);//TEST
+                updateFat(raf, fat2Address, dir.nextClusterNumber, 2);
+                break;
+            }
+            else if(dir.name.equalsIgnoreCase(fName) && dir.containsFiles == true)
+            {
+                LOGGER.log(Level.WARNING, fName + " is directory and cannot be deleted.");
+                System.out.println("Error: cannot delete directory");
+                break;
+            }
+        }
+        if(marked)//marking worked, now refresh parent object and update fsinfo sector fields
+        {
+            this.fs.files.clear();
+            if(this.fs.parentDirectory == null)//root
+            {
+                int startOfRootDirectory = getAddress(this.boot.getRootDirAddress()) + 32;
+                this.currentLocation = startOfRootDirectory;
+                raf.seek(this.currentLocation);
+            }
+            parseDirectories(raf, this.fs);
+            updateFatSector(raf);
+        }
+        //update number of free clusters and first free clusters if its earlier than current first free clusters
+    }
+
+    private void updateFatSector(RandomAccessFile raf) throws IOException
+    {
+        this.currentLocation = this.getAddress(this.boot.getBPB_FSInfo()) + 488;
+        raf.seek(this.currentLocation);
+        //fill up with numfreecluster
+        String bytes = Integer.toHexString(numFreeClusters);
+        while(bytes.length() < 8)
+        {
+            bytes = "0".concat(bytes);
+        }
+        //System.out.println(bytes);
+        for(int i = 8; i > 1; i = i - 2)
+        {
+            byte b = (byte) Integer.parseInt(bytes.substring(i - 2, i), 16);
+            raf.write(b);
+            //System.out.println("FSI FREE COUNT " + b);//TEST
+        }
+        //reset first  free cluster number in fsinfo sector
+        byte[] FSI_Nxt_Free = new byte[4];
+        //492, 4
+        bytes = Integer.toHexString(firstThreeFreecClusters[0]);
+        while(bytes.length() < 8)
+        {
+            bytes = "0".concat(bytes);
+        }
+        //System.out.println(bytes);
+        for(int i = 8; i > 1; i = i - 2)
+        {
+            byte b = (byte) Integer.parseInt(bytes.substring(i - 2, i), 16);
+            raf.write(b);
+            //System.out.println("FSI FREE COUNT " + b);
+        }
+    }
+
+    private boolean markDirectoryEntries(RandomAccessFile raf, ArrayList<Integer> clusters, String toDelete) throws IOException
+    {
+        for(int cluster: clusters)
+        {
+            //System.out.println(cluster);
+            int nextAddress = getAddress(this.boot.getRootDirAddress() + cluster - this.boot.getBPB_RootClus());
+            currentLocation = nextAddress;
+            //System.out.println(nextAddress);
+            raf.seek(nextAddress);
+            //search for file name in cluster
+            for (int i = 0; i < 16; i++)//parse each 32 bit potential entry
+            {
+                //System.out.println(currentLocation);
+                byte[] DIR_Name = new byte[11];//short name - 0 -> 11
+                raf.read(DIR_Name, 0, 11);
+                this.currentLocation += 11;
+                // System.out.println(DIR_Name[0]);//TEST
+                String byteString = new String(DIR_Name, "UTF-8");//https://stackoverflow.com/a/18583290
+                String[] splitName = byteString.split(" +");
+                if(splitName.length == 2)
+                {
+                    byteString = splitName[0] + "." + splitName[1];
+                    byteString = byteString.trim();//lowercase?
+                }
+                else
+                {
+                    byteString = byteString.trim();//lowercase?
+                }
+                //System.out.println("This is the directory's name: " + byteString);//TEST
+                if(byteString.equalsIgnoreCase(toDelete))
+                {
+                    //mark it
+                    raf.seek(currentLocation - 11);//go back to beginning
+                    byte b = (byte) 0xE5;
+                    raf.write(b);
+                            /*
+                                test
+
+                            raf.seek(currentLocation - 11);//go back to beginning
+                            System.out.println("Just marked location with " + raf.readByte());*/
+                    return true;
+                }
+                else
+                {
+                    raf.seek(currentLocation + 21);//try next one
+                    currentLocation += 21;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void updateFat(RandomAccessFile raf, int location, int firstCluster, int fatNum) throws IOException
+    {
+        String valueString = "";
+        int nextCluster = firstCluster;
+        int clusterEntryAddress = 0;
+        while(!valueString.equalsIgnoreCase("0FFFFFF8") && !valueString.equalsIgnoreCase("0FFFFFFF") && !valueString.equalsIgnoreCase("FFFFFFFF") && !valueString.equalsIgnoreCase("00000000"))
+        {
+            //System.out.println("Resetting fat for cluster " + nextCluster);
+            valueString = "";
+            clusterEntryAddress = location + getFATEntOffset(nextCluster);
+            //System.out.println("Address of fat entry: " + Integer.toHexString(clusterEntryAddress));//TEST
+            raf.seek(clusterEntryAddress);
+            byte[] value = new byte[4];
+            raf.read(value, 0, 4);
+            for(int i = value.length - 1; i >= 0; i--)
+            {
+                byte b = value[i];
+                //System.out.printf("0x%02X\n", b);//https://stackoverflow.com/a/1748044//TEST
+                valueString += String.format("%02X", b);
+            }
+            if(fatNum == 1  && nextCluster > this.boot.getBPB_RootClus()) //only update for first fat
+            {
+                numFreeClusters++;
+                if (firstThreeFreecClusters[2] > nextCluster) {
+                    firstThreeFreecClusters[2] = nextCluster;
+                    Arrays.sort(firstThreeFreecClusters);
+                }
+            }
+            //System.out.println("Value in string: " + valueString);//TEST
+            if(!valueString.equalsIgnoreCase("0FFFFFF8") && !valueString.equalsIgnoreCase("0FFFFFFF") && !valueString.equalsIgnoreCase("FFFFFFFF") && !valueString.equalsIgnoreCase("00000000"))
+            {
+                //there is another cluster to reset
+                nextCluster = Integer.parseInt(valueString, 16);
+            }
+            //go back to fat entry and set to free with 00000000
+            raf.seek(clusterEntryAddress);
+            for(int i = 0; i < 4; i++)
+            {
+                byte b = (byte) 0x00;
+                raf.write(b);
+            }
+
+        }
+    }
+
+
+    /**
+     * Take current free and get next free
+     * @param raf
+     * @param currentFree
+     * @return
+     */
+    private int getNextFreeCluster(RandomAccessFile raf, int currentFree) throws IOException
+    {
+        int potentialFreeCluster = currentFree;// + 1;
+        int nextClusterEntryAddress = getAddress(getFATSecNum(potentialFreeCluster)) + getFATEntOffset(potentialFreeCluster);
+        int endOfFat = 532992;//TODO: change to real number
+        while(nextClusterEntryAddress < endOfFat)
+        {
+            potentialFreeCluster = potentialFreeCluster + 1;
+            nextClusterEntryAddress = getAddress(getFATSecNum(potentialFreeCluster)) + getFATEntOffset(potentialFreeCluster);
+            //System.out.println("Address of fat entry: " + Integer.toHexString(nextClusterEntryAddress));//TEST
+            raf.seek(nextClusterEntryAddress);
+            byte[] value = new byte[4];
+            String valueString = "";
+            raf.read(value, 0, 4);
+            for (int i = value.length - 1; i >= 0; i--) {
+                byte b = value[i];
+                //System.out.printf("0x%02X\n", b);//https://stackoverflow.com/a/1748044//TEST
+                valueString += String.format("%02X", b);
+            }
+            //System.out.println("Value in string: " + valueString);//TEST
+            if (valueString.equals("00000000")) {
+                return potentialFreeCluster;
+            }
+            else if(this.numFreeClusters <= 0)
+            {
+                return 0;
+            }
+        }
+        return 0;
     }
 
     /**
@@ -164,16 +815,23 @@ public class Fat32Reader {
     private void parseDirectories(RandomAccessFile raf, Directory dir) throws IOException
     {
         Directory newDir;
+
         //parse directory
         for(int j = 0; j < this.fs.clusters.size(); j++)//for each cluster in directory
         {
-            if(dir.parentDirectory != null) //not the root
+            if(dir.parentDirectory != null || dir.clusters.get(j) != 0) //not the root
             {
                 int clusterAddress = this.boot.getRootDirAddress() + dir.clusters.get(j) - this.boot.getBPB_RootClus();
                 clusterAddress = getAddress(clusterAddress);
                 raf.seek(clusterAddress);
                 this.currentLocation = clusterAddress;
                 //System.out.println("Parsing in Cluster address " + Integer.toHexString(clusterAddress) + " from cluster " + dir.clusters.get(j));//TEST
+            }
+            if(dir.clusters.get(j) == 2)//coming back to root after delete, start after volume name
+            {
+                int clusterAddress = getAddress(this.boot.getRootDirAddress()) + 32;
+                raf.seek(clusterAddress);
+                this.currentLocation = clusterAddress;
             }
             //parse cluster
             for (int i = 0; i < 16; i++)//parse each 32 bit potential entry
@@ -216,15 +874,15 @@ public class Fat32Reader {
         byte[] DIR_Name = new byte[11];//short name - 0 -> 11
         raf.read(DIR_Name, 0, 11);
         this.currentLocation += 11;
-       // System.out.println(DIR_Name[0]);//TEST
-        if(DIR_Name[0] == 0xe5)//TODO CHANGE THIS
+        //System.out.println(currentLocation);//TEST
+        if(DIR_Name[0] == -27)
         {
             //done with directories
             this.currentLocation += 21;
             raf.seek(this.currentLocation);
             return false;
         }
-        else if(DIR_Name[0] == 00)
+        else if(DIR_Name[0] == 0)
         {
             dir.name = "done";
             return true;
@@ -260,6 +918,12 @@ public class Fat32Reader {
             return false;
         }
         setAttribute(dir, byteString, temp);
+
+        if(dir.attributes.equalsIgnoreCase("ATTR_ARCHIVE") && !dir.name.contains("."))
+        {
+            dir.name = dir.name.substring(0, 8) + "." + dir.name.substring(8);
+            //System.out.println("new name with .: " + dir.name);
+        }
 
         byte[] DIR_FstClusHI = new byte[2];//High word of this entry’s first cluster number - 20 -> 22
         String hi = getValue(raf, DIR_FstClusHI, 8, 2);
@@ -662,19 +1326,28 @@ public class Fat32Reader {
                 valueString += String.format("%02X", b);
             }
             //System.out.println("Value in string: " + valueString);//TEST
-            int clusterNum = Integer.parseInt(valueString, 16);
+            int clusterNum = 0;//Integer.parseInt(valueString, 16);
             if(!valueString.equalsIgnoreCase("0FFFFFF8") && !valueString.equalsIgnoreCase("0FFFFFFF") && !valueString.equalsIgnoreCase("FFFFFFFF") && !valueString.equalsIgnoreCase("00000000"))
             {
                 //System.out.println("Cluster number: " + clusterNum);//TEST
+                clusterNum = Integer.parseInt(valueString, 16);
                 clusters.add(clusterNum);
+                fatEntOffset = getFATEntOffset(clusterNum);
             }
             else
             {
                 clusters.add(0, firstClusterNumber);
             }
-            fatEntOffset = getFATEntOffset(clusterNum);
         }
         //System.out.println("Cluster list size: " + clusters.size());//TEST
         return clusters;
     }
+
+    public void getFreelist() 
+    {
+        System.out.println("First three free cluster indices: " + firstThreeFreecClusters[0] + ", " + firstThreeFreecClusters[1] + ", " + firstThreeFreecClusters[2]);
+        System.out.println("Number of free clusters in FAT: " + numFreeClusters);
+    }
+
+
 }

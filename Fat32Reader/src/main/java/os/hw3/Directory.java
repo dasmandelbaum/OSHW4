@@ -11,7 +11,6 @@ public class Directory
     /*
          Info needed for this file system
      */
-    String pathToHere;
     String name;
     Directory parentDirectory;
     boolean containsFiles;//see if it holds files
