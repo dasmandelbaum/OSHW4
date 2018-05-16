@@ -34,12 +34,11 @@
  5. Start inputting commands and navigate, read, delete, add files and quit 
     to your heart's content.
  
-##	Notes
- 1. Assumptions:
-        a. Assuming file name before period must be 8 or fewer letters
-        b. Ignoring long names in directory entries
-        c. First open clusters from fs info sector is correct until shown otherwise 
- 2. Will assume "/" is part of file name if typed with command, not relating to navigation
+##	Assumptions
+ 1. Assuming file name before period must be 8 or fewer letters
+ 2. Ignoring long names in directory entries
+ 3. Assuming first open clusters from fs info sector is correct until shown otherwise 
+ 4. Assuming "/" is part of file name if typed with command, not relating to navigation
 
 ##	Challenges encountered along the way
  1. Balancing efficiency in navigation versus storage - we took an OO approach, which 
