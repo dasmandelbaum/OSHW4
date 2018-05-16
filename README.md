@@ -31,13 +31,14 @@
 ```
     java -cp .:./target/Fat32Reader-1.0-SNAPSHOT.jar os.hw3.Fat32Reader "fat32.img" 
 ```     
- 5. Start inputting commands and navigate, read and quit to your heart's content.
+ 5. Start inputting commands and navigate, read, delete, add files and quit 
+    to your heart's content.
  
 ##	Notes
  1. Assumptions:
-    a. Assuming file name before period must be 8 or fewer letters
-    b. Ignoring long names in directory entries
-    c. First open clusters from fs info sector is correct until shown otherwise 
+        a. Assuming file name before period must be 8 or fewer letters
+        b. Ignoring long names in directory entries
+        c. First open clusters from fs info sector is correct until shown otherwise 
  2. Will assume "/" is part of file name if typed with command, not relating to navigation
 
 ##	Challenges encountered along the way
