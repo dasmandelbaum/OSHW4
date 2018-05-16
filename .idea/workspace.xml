@@ -2,8 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="87065c0b-1d82-49df-8bfa-883144a1af9b" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Fat32Reader/src/main/java/os/hw3/Fat32Reader.java" afterPath="$PROJECT_DIR$/Fat32Reader/src/main/java/os/hw3/Fat32Reader.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -18,8 +17,8 @@
       <file leaf-file-name="Fat32Reader.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Fat32Reader/src/main/java/os/hw3/Fat32Reader.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="177">
-              <caret line="581" column="49" lean-forward="true" selection-start-line="581" selection-start-column="49" selection-end-line="581" selection-end-column="49" />
+            <state relative-caret-position="-520">
+              <caret line="1146" column="9" lean-forward="true" selection-start-line="1146" selection-start-column="9" selection-end-line="1146" selection-end-column="9" />
               <folding>
                 <element signature="e#8954#8963#0" expanded="true" />
                 <element signature="method#isDirectory#0;class#Fat32Reader#0" expanded="false" />
@@ -82,6 +81,7 @@
       <find>clusters siz</find>
       <find>parse</find>
       <find>parsed</find>
+      <find>read(</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -298,12 +298,12 @@
       <workItem from="1525744802190" duration="7801000" />
       <workItem from="1526329164734" duration="20533000" />
       <workItem from="1526395813886" duration="5433000" />
-      <workItem from="1526505670305" duration="3313000" />
+      <workItem from="1526505670305" duration="3844000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="67133000" />
+    <option name="totallyTimeSpent" value="67664000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -327,7 +327,7 @@
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.4107143" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2752976" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32886904" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
@@ -521,8 +521,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Fat32Reader/src/main/java/os/hw3/Fat32Reader.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="177">
-          <caret line="581" column="49" lean-forward="true" selection-start-line="581" selection-start-column="49" selection-end-line="581" selection-end-column="49" />
+        <state relative-caret-position="-520">
+          <caret line="1146" column="9" lean-forward="true" selection-start-line="1146" selection-start-column="9" selection-end-line="1146" selection-end-column="9" />
           <folding>
             <element signature="e#8954#8963#0" expanded="true" />
             <element signature="method#isDirectory#0;class#Fat32Reader#0" expanded="false" />

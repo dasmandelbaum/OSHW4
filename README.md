@@ -1,6 +1,6 @@
 # OSHW4
 
-## Jeffrey Hagler and David Mandelbaum - (5/14/18)
+## Jeffrey Hagler and David Mandelbaum - (5/16/18)
 ## A listing of all files/directories in your submission and a brief description of each
   * Fat32Reader class - main command center for parsing file and user-run navigation
   * Boot class - used for info command
